@@ -1,0 +1,9 @@
+dist/
+.git/
+node_modules/
+.idea/
+..aliases.swp
+package-lock.json
+env.js
+env.js
+config.js
