@@ -67,6 +67,27 @@ let UserSchema = new mongoose.Schema({
 
 UserSchema.plugin(mongoose_timestamp);
 
-let UserModel = mongoose.model('UserModel', UserSchema);
+let User = mongoose.model('User', UserSchema);
 
-export {UserModel};
+let ProgramSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: User,
+    },
+    title: {
+        type: String,
+        required: [true, 'Title is required'],
+        minlength: [3, "Atleast 3 characters are required"],
+        maxlength: [100, "Atmost 100 characters are allowed"]
+    },
+    description: {
+        type: String,
+        maxlength: [500, "Atmost 500 characters are allowed"]
+    }
+});
+
+ProgramSchema.plugin(mongoose_timestamp);
+
+let Program = mongoose.model('Program', ProgramSchema);
+
+export {User, Program};
