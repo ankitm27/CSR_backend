@@ -1,4 +1,5 @@
 import {getRequestUrl} from "../utils/helpers";
+import responseCodes, {sendResponse} from "./response.py";
 
 
 export class BaseRepository {
@@ -57,7 +58,7 @@ export class BaseRepository {
         if (instance != null) {
             return instance;
         } else {
-            res.sendStatus(404).json({});
+            sendResponse(res, responseCodes.HTTP_404_NOT_FOUND);
         }
     }
 
@@ -84,7 +85,7 @@ export class BaseRepository {
         if (data.deletedCount != 0) {
             return true;
         } else {
-            res.sendStatus(404).json({});
+            sendResponse(res, responseCodes.HTTP_404_NOT_FOUND);
         }
     }
 }

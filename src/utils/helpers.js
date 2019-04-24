@@ -25,3 +25,11 @@ export function compareHash(myPlaintextPassword, hashPassword) {
 export function getRequestUrl(req) {
     return req.protocol + '://' + req.get('host') + req.originalUrl;
 }
+
+export function isEmpty(obj) {
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}

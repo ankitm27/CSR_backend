@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import {jwtSecret} from "../settings/config";
 import {User} from "../users/model";
+import responseCodes, {sendResponse} from "./response.py";
+import {isEmpty} from "../utils/helpers";
 
 
 export class TokenAuthenticationMiddleware {
@@ -15,29 +17,19 @@ export class TokenAuthenticationMiddleware {
             try {
                 decoded = await jwt.verify(token, jwtSecret);
             } catch (e) {
-                res.send({
-                    status_code: 401,
-                    success: false,
-                    message: 'Token expired'
-                });
+                await sendResponse(res, responseCodes.HTTP_401_UNAUTHORIZED, "Token expired", null);
             }
-            let user = await User.findOne({"email": decoded.email});
-            if (user == null) {
-                return res.json({
-                    status_code: 401,
-                    success: false,
-                    message: 'Invalid token is supplied'
-                });
-            } else {
-                req.user = user;
-                next();
+            if (!isEmpty(decoded)) {
+                let user = await User.findOne({"email": decoded.email});
+                if (user == null) {
+                    await sendResponse(res, responseCodes.HTTP_401_UNAUTHORIZED, "Invalid token", null);
+                } else {
+                    req.user = user;
+                    next();
+                }
             }
         } else {
-            return res.json({
-                status_code: 401,
-                success: false,
-                message: 'Auth token is not supplied'
-            });
+            await sendResponse(res, responseCodes.HTTP_401_UNAUTHORIZED);
         }
     }
 }
