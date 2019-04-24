@@ -1,10 +1,9 @@
 import jwt from 'jsonwebtoken';
 import {jwtSecret} from "../settings/config";
-import {UserRepository} from "./repository";
-import {makeHash, compareHash} from "../utils/helpers";
-import util from "util";
-import {User, Program} from "./model";
-import {ProgramRepository} from "./repository";
+import {FormRepository, ProgramRepository, UserRepository} from "./repository";
+import {compareHash, makeHash} from "../utils/helpers";
+import {User} from "./model";
+import {BaseController} from "../contrib/controller";
 
 
 export class UserController {
@@ -16,19 +15,19 @@ export class UserController {
     async login(req, res, next) {
         let data = req.body;
         let user = await User.findOne({"email": data.email});
-        if(user == null) {
+        if (user == null) {
             res.send({
                 "status_code": 400,
                 "error": "Email not found"
-            })
-        }else {
+            });
+        } else {
             if (compareHash(data.password, user.password) == false) {
                 res.send({
                     "status_code": 400,
                     "error": "Invalid password"
                 })
-            }else {
-                let token = await jwt.sign({"email": user.email}, jwtSecret, { expiresIn: '24h'});
+            } else {
+                let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: '24h'});
                 res.send({
                     "status_code": 200,
                     "token": token
@@ -42,17 +41,17 @@ export class UserController {
         // console.log(await this.userRepository.createUser(req.body));
         let data = req.body;
         data.password = makeHash(data.password);
-        if(await User.findOne({'email': data.email}) != null) {
+        if (await User.findOne({'email': data.email}) != null) {
             res.send({
                 "status_code": 400,
                 "error": "User already exists with this email"
             })
-        }else if(await User.findOne({'mobile': data.mobile}) != null) {
+        } else if (await User.findOne({'mobile': data.mobile}) != null) {
             res.send({
                 "status_code": 400,
                 "error": "User already exists with this mobile"
             })
-        }else {
+        } else {
             let user = await User.create(data);
             res.send(user);
         }
@@ -60,40 +59,27 @@ export class UserController {
 }
 
 
-export class ProgramController {
+export class ProgramController extends BaseController {
     constructor() {
-        this.programRepository = new ProgramRepository();
+        super(ProgramRepository);
     }
 
-    async getListP(req, res, next){
-        let data = await Program.find({});
-        res.send(data);
-    }
-
-    async getDetail(req, res, next){
-        let uid = req.params.uid;
-        res.send(await this.programRepository.get_object_or_404(res, uid));
-    }
-
-    async create(req, res, next){
+    performCreate(req) {
         let data = req.body;
         data.user = req.user._id;
-        res.send(await Program.create(data));
+        return data;
+    }
+}
+
+
+export class FormController extends BaseController {
+    constructor() {
+        super(FormRepository);
     }
 
-    async update(req, res, next){
+    performCreate(req) {
         let data = req.body;
-        let uid = req.params.uid;
-        let program = await this.programRepository.get_object_or_404(res, uid);
-        for (let field in data ) {
-            program[field] = data[field];
-        }
-        res.send(await program.save());
-    }
-
-    async delete(req, res, next){
-        let uid = req.params.uid;
-        await this.programRepository.delete_object_or_404(res, uid);
-        res.send(204);
+        data.user = req.user._id;
+        return data;
     }
 }

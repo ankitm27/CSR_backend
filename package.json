@@ -1,7 +1,7 @@
 {
-  "name": "currency-converter",
+  "name": "csr-backend",
   "version": "1.0.0",
-  "description": "Convert currency",
+  "description": "WorkPoseFul",
   "main": "index.js",
   "scripts": {
     "build": "rm -rf dist/* && babel src -d dist",

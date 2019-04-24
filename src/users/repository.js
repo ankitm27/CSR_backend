@@ -1,7 +1,7 @@
 import {BaseRepository} from "../contrib/repository";
-import {User, Program} from "./model";
+import {Form, Program} from "./model";
+
 // import {currency_mapping} from "./constants";
-import {makeHash} from "../utils/helpers";
 
 
 export class UserRepository {
@@ -29,9 +29,15 @@ export class UserRepository {
 }
 
 
-export class ProgramRepository extends BaseRepository{
+export class ProgramRepository extends BaseRepository {
     constructor() {
         super(Program);
     }
+}
 
+
+export class FormRepository extends BaseRepository {
+    constructor() {
+        super(Form);
+    }
 }

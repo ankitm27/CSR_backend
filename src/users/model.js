@@ -71,6 +71,7 @@ let User = mongoose.model('User', UserSchema);
 
 let ProgramSchema = new mongoose.Schema({
     user: {
+        required: [true, 'User is required'],
         type: mongoose.Schema.Types.ObjectId,
         ref: User,
     },
@@ -90,4 +91,31 @@ ProgramSchema.plugin(mongoose_timestamp);
 
 let Program = mongoose.model('Program', ProgramSchema);
 
-export {User, Program};
+let FormSchema = new mongoose.Schema({
+    user: {
+        required: [true, 'User is required'],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: User,
+    },
+    program: {
+        required: [true, 'Program is required'],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Program,
+    },
+    title: {
+        type: String,
+        required: [true, 'Title is required'],
+        minlength: [3, "Atleast 3 characters are required"],
+        maxlength: [100, "Atmost 100 characters are allowed"]
+    },
+    description: {
+        type: String,
+        maxlength: [500, "Atmost 500 characters are allowed"]
+    }
+});
+
+FormSchema.plugin(mongoose_timestamp);
+
+let Form = mongoose.model('Form', FormSchema);
+
+export {User, Program, Form};

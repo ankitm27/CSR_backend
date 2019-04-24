@@ -1,6 +1,6 @@
 import express from 'express';
 
-import {UserController, ProgramController} from "./controller";
+import {FormController, ProgramController, UserController} from "./controller";
 
 import {TokenAuthenticationMiddleware} from "../contrib/middleware";
 
@@ -8,6 +8,7 @@ let router = express.Router();
 
 let userController = new UserController();
 let programController = new ProgramController();
+let formController = new FormController();
 
 let tokenMiddleWare = new TokenAuthenticationMiddleware();
 
@@ -31,6 +32,22 @@ router.patch('/program/:uid', (req, res, next) => {
 });
 router.delete('/program/:uid', (req, res, next) => {
     programController.delete(req, res, next);
+});
+
+router.get('/form', (req, res, next) => {
+    formController.getList(req, res, next);
+});
+router.get('/form/:uid', (req, res, next) => {
+    formController.getDetail(req, res, next);
+});
+router.post('/form', (req, res, next) => {
+    formController.create(req, res, next);
+});
+router.patch('/form/:uid', (req, res, next) => {
+    formController.update(req, res, next);
+});
+router.delete('/form/:uid', (req, res, next) => {
+    formController.delete(req, res, next);
 });
 
 // Classes are used just like ES5 constructor functions:

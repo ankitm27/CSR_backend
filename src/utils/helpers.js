@@ -21,3 +21,7 @@ export function makeHash(myPlaintextPassword) {
 export function compareHash(myPlaintextPassword, hashPassword) {
     return bcrypt.compareSync(myPlaintextPassword, hashPassword);
 }
+
+export function getRequestUrl(req) {
+    return req.protocol + '://' + req.get('host') + req.originalUrl;
+}
