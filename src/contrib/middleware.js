@@ -23,7 +23,9 @@ export class TokenAuthenticationMiddleware {
                 let user = await User.findOne({"email": decoded.email});
                 if (user == null) {
                     await sendResponse(res, responseCodes.HTTP_401_UNAUTHORIZED, "Invalid token", null);
-                } else {
+                }else if (!user.allowLoggedIn && req.originalUrl != "/api/volunteer/reset-password/") {
+                    sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Password reset is required");
+                }else {
                     req.user = user;
                     next();
                 }

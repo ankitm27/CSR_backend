@@ -2,6 +2,12 @@ import {emailRegex, mobileRegex} from '../utils/customRegex';
 import mongoose from "mongoose";
 import mongoose_timestamp from "mongoose-timestamp";
 
+let ROLE_CHOICES = Object.freeze({
+    ADMIN: "admin",
+    VOLUNTEER: "volunteer",
+});
+
+export default ROLE_CHOICES;
 
 let UserSchema = new mongoose.Schema({
     email: {
@@ -60,6 +66,16 @@ let UserSchema = new mongoose.Schema({
         default: false,
     },
     mobileVerified: {
+        type: Boolean,
+        default: false,
+    },
+    role: {
+        type: String,
+        enum: Object.values(ROLE_CHOICES),
+        maxlength: [20, "More than 20 characters are not allowed"],
+        required: [true, 'Role is required'],
+    },
+    allowLoggedIn: {
         type: Boolean,
         default: false,
     }

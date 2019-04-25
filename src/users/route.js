@@ -16,8 +16,15 @@ let tokenMiddleWare = new TokenAuthenticationMiddleware();
 router.post('/login', userController.login);
 router.post('/register', userController.register);
 
+router.post('/volunteer/login', (req, res, next) => {
+    userController.volunteerLogin(req, res, next);
+});
+
 router.use(tokenMiddleWare.checkToken);
 
+router.post('/volunteer/reset-password', (req, res, next) => {
+    userController.resetPassword(req, res, next);
+});
 router.get('/program', (req, res, next) => {
     programController.getList(req, res, next);
 });
