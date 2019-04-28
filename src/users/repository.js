@@ -1,12 +1,11 @@
 import {BaseRepository} from "../contrib/repository";
-import {Form, Program} from "./model";
-
-// import {currency_mapping} from "./constants";
+import {Beneficiary, Form, Program, User} from "./model";
 
 
-export class UserRepository {
+export class UserRepository extends BaseRepository {
 
     constructor() {
+        super(User);
     }
 
     async getUser() {
@@ -39,5 +38,11 @@ export class ProgramRepository extends BaseRepository {
 export class FormRepository extends BaseRepository {
     constructor() {
         super(Form);
+    }
+}
+
+export class BeneficiaryRepository extends BaseRepository {
+    constructor() {
+        super(Beneficiary);
     }
 }
