@@ -17,10 +17,10 @@ let BeneficiarySchema = new mongoose.Schema({
         required: [true, 'Aadhaar number is required'],
         minlength: [12, "Aadhaar number length must be greater than equal to 12"],
         maxlength: [12, "Aadhaar number length must be less than equal to 12"],
-        // validate: {
-        //     validator: email => emailRegex.test(email),
-        //     message: props => `${props.value} is not a valid email address`
-        // }
+        validate: {
+            validator: aadhaarNumbe => aadhaarNumberRegex.test(aadhaarNumbe),
+            message: props => `${props.value} is not a valid aadhaar number`
+        }
     },
     name: {
         type: String,
@@ -198,6 +198,21 @@ let QUESTION_TYPE_CHOICES = Object.freeze({
     PHONE: "phone",
     EMAIL: "email",
     DATETIME: "datetime",
+    LOCATION: "location"
+});
+
+let VALIDATION_NAME_CHOICES = Object.freeze({
+    MIN: "min",
+    MAX: "max",
+    NUMBER_FIELD_TYPE: "numberFieldType",
+    LOCATION_FIELD_TYPE: "locationFieldType",
+    ACCURACY: "accuracy",
+    DATE_FORMAT: "dateFormat",
+    TIME_FORMAT: "timeFormat",
+    AREA_UNIT: "areaUnit",
+    LENGTH_UNIT: "lengthUnit",
+    IMAGE_RESOLUTION: "imageResolution",
+    VIDEO_RESOLUTION: "videoResolution"
 });
 
 let QuestionSchema = new mongoose.Schema({
@@ -220,15 +235,15 @@ let QuestionSchema = new mongoose.Schema({
     },
     multiple: {
         type: Boolean,
-        strict: false,
+        default: false
     },
-    extension: {
-        type: Object,
-        strict: false
-    },
-    validations: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: Validation
+    // extension: {
+    //     type: Object,
+    //     strict: false
+    // },
+    validatorNames: [{
+        type: String,
+        enum: Object.values(VALIDATION_NAME_CHOICES)
     }]
 });
 
@@ -273,19 +288,72 @@ let FormQuestionSchema = new mongoose.Schema({
         type: Boolean,
         strict: false
     },
-    validationResult: {
-        type: Object,
-        default: {}
-    }
+    validations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Validation
+    }]
 });
 
 FormQuestionSchema.plugin(mongoose_timestamp);
 
 let FormQuestion = mongoose.model('FormQuestion', FormQuestionSchema);
 
-let VALIDATION_NAME_CHOICES = Object.freeze({
-    MIN_LENGTH: "min-length",
-    MAX_LENGTH: "max-length"
+let NUMBER_FIELD_TYPE_CHOICES = Object.freeze({
+    INT: "int",
+    DECIMAL: "decimal",
+});
+let LOCATION_FIELD_TYPE_CHOICES = Object.freeze({
+    CURRENT: "current",
+    MARKED: "marked",
+});
+
+let ACCURACY_CHOICES = Object.freeze({
+    HIGH: "high",
+    MEDIUM: "medium",
+    LOW: "low",
+});
+
+let DATE_FORMAT_CHOICES = Object.freeze({
+    DDMMYYYY: "DD/MM/YYYY",
+    MMDDYYYY: "MM/DD/YYYY",
+    YYYYDDMM: "YYYY/DD/MM",
+    MMYYYYDD: "MM/YYYY/DD",
+    YYYYMMDD: "YYYY/MM/DD",
+    DDYYYYMM: "DD/YYYY/MM",
+});
+
+let TIME_FORMAT_CHOICES = Object.freeze({
+    TWELVE: "twelve",
+    TWENTY_FOUR: "twenty-four",
+});
+
+let AREA_UNIT_CHOICES = Object.freeze({
+    SQ_MT: "square-meter",
+    SQ_KM: "square-kilometer",
+    SQ_MI: "square-mile",
+    SQ_FT: "square-foot",
+    HT: "hectare",
+    AC: "acre",
+});
+
+let LENGTH_UNIT_CHOICES = Object.freeze({
+    MT: "meter",
+    KM: "kilometer",
+    MI: "mile",
+    FT: "foot",
+    YD: "yard"
+});
+
+let IMAGE_RESOLUTION_CHOICES = Object.freeze({
+    HIGH: "high",
+    MEDIUM: "medium",
+    LOW: "low",
+});
+
+let VIDEO_RESOLUTION_CHOICES = Object.freeze({
+    HIGH: "high",
+    MEDIUM: "medium",
+    LOW: "low",
 });
 
 let ValidationSchema = new mongoose.Schema({
@@ -301,21 +369,86 @@ let ValidationSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    minLength: {
+    min: {
         type: Number,
-        strict: true
+        strict: false
     },
-    maxLength: {
+    max: {
         type: Number,
-        strict: true
+        strict: false
     },
-
+    numberFieldType: {
+        type: String,
+        enum: Object.values(NUMBER_FIELD_TYPE_CHOICES),
+        default: NUMBER_FIELD_TYPE_CHOICES.INT,
+        strict: false
+    },
+    locationFieldType: {
+        type: String,
+        enum: Object.values(LOCATION_FIELD_TYPE_CHOICES),
+        default: LOCATION_FIELD_TYPE_CHOICES.CURRENT,
+        strict: false
+    },
+    accuracy: {
+        type: String,
+        enum: Object.values(ACCURACY_CHOICES),
+        default: ACCURACY_CHOICES.MEDIUM,
+        strict: false
+    },
+    dateFormat: {
+        type: String,
+        enum: Object.values(DATE_FORMAT_CHOICES),
+        default: DATE_FORMAT_CHOICES.DDMMYYYY,
+        strict: false
+    },
+    timeFormat: {
+        type: String,
+        enum: Object.values(TIME_FORMAT_CHOICES),
+        default: TIME_FORMAT_CHOICES.TWELVE,
+        strict: false
+    },
+    areaUnit: {
+        type: String,
+        enum: Object.values(AREA_UNIT_CHOICES),
+        default: AREA_UNIT_CHOICES.SQ_FT,
+        strict: false
+    },
+    lengthUnit: {
+        type: String,
+        enum: Object.values(LENGTH_UNIT_CHOICES),
+        default: LENGTH_UNIT_CHOICES.SQ_FT,
+        strict: false
+    },
+    imageResolution: {
+        type: String,
+        enum: Object.values(IMAGE_RESOLUTION_CHOICES),
+        default: IMAGE_RESOLUTION_CHOICES.LOW,
+        strict: false
+    },
+    videoResolution: {
+        type: String,
+        enum: Object.values(VIDEO_RESOLUTION_CHOICES),
+        default: VIDEO_RESOLUTION_CHOICES.LOW,
+        strict: false
+    }
 });
 
 ValidationSchema.plugin(mongoose_timestamp);
 
 let Validation = mongoose.model('Validation', ValidationSchema);
 
-export default {QUESTION_TYPE_CHOICES, VALIDATION_NAME_CHOICES, ROLE_CHOICES};
+export {
+    QUESTION_TYPE_CHOICES,
+    VALIDATION_NAME_CHOICES,
+    ROLE_CHOICES,
+    VIDEO_RESOLUTION_CHOICES,
+    IMAGE_RESOLUTION_CHOICES,
+    LENGTH_UNIT_CHOICES,
+    AREA_UNIT_CHOICES,
+    DATE_FORMAT_CHOICES,
+    TIME_FORMAT_CHOICES,
+    ACCURACY_CHOICES,
+    LOCATION_FIELD_TYPE_CHOICES,
+};
 
 export {User, Program, Form, Beneficiary, Question, FormQuestion, Validation};

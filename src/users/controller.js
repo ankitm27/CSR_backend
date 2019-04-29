@@ -5,7 +5,7 @@ import {compareHash, makeHash} from "../utils/helpers";
 import {User} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
-import ROLE_CHOICES from "./model";
+import {ROLE_CHOICES} from "./model";
 
 
 export class UserController extends BaseController{
