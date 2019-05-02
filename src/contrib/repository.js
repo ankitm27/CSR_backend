@@ -34,6 +34,10 @@ export class BaseRepository {
         return nextUrl;
     }
 
+    async updateResponse(response) {
+        return await response;
+    }
+
     async getPaginatedResponse(req, sortQuery, query) {
         let queryParams = req.query;
         let limit = queryParams.limit == undefined || isNaN(queryParams.limit) ?
@@ -45,7 +49,7 @@ export class BaseRepository {
             count: total_count,
             prev: this.prevPageUrl(req, limit, offset),
             next: this.nextPageUrl(req, limit, offset, total_count),
-            results: await this.Model.find(query).sort(sortQuery).skip(offset).limit(limit)
+            results: await this.updateResponse(await this.Model.find(query).sort(sortQuery).skip(offset).limit(limit))
         };
     }
 

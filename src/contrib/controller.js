@@ -29,6 +29,7 @@ export class BaseController {
         return req.body;
     }
 
+
     async getList(req, res, next) {
         let query = await this.getListQuery(req);
         let response = await this.repository.getList(req);

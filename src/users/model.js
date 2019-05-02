@@ -150,8 +150,33 @@ let ProgramSchema = new mongoose.Schema({
     endEate: {
         type: Date,
         min: Date('1950-01-01T00:00:00')
-    }
-
+    },
+    questions: [{
+        question: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Question',
+        },
+        title: {
+            type: String,
+            required: [true, "Title is required"],
+            maxlength: [500, "Atmost 500 characters are allowed"]
+        },
+        mandatory: {
+            type: Boolean,
+            default: false
+        },
+        description: {
+            type: String,
+        },
+        keyword: {
+            type: String,
+            maxlength: [100, "Atmost 100 characters are allowed"]
+        },
+        validations: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Validation'
+        }]
+    }]
 });
 
 ProgramSchema.plugin(mongoose_timestamp);
@@ -182,6 +207,32 @@ let FormSchema = new mongoose.Schema({
     beneficiaries: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: Beneficiary,
+    }],
+    questions: [{
+        question: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Question',
+        },
+        title: {
+            type: String,
+            required: [true, "Title is required"],
+            maxlength: [500, "Atmost 500 characters are allowed"]
+        },
+        mandatory: {
+            type: Boolean,
+            default: false
+        },
+        description: {
+            type: String,
+        },
+        keyword: {
+            type: String,
+            maxlength: [100, "Atmost 100 characters are allowed"]
+        },
+        validations: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Validation'
+        }]
     }]
 });
 
@@ -197,22 +248,60 @@ let QUESTION_TYPE_CHOICES = Object.freeze({
     BREAK: "break",
     PHONE: "phone",
     EMAIL: "email",
-    DATETIME: "datetime",
-    LOCATION: "location"
+    DATE: "date",
+    TIME: "time",
+    LOCATION: "location",
+    SCALE: "scale",
+    RATING: "rating",
+    BARCODE: "barcode",
 });
 
 let VALIDATION_NAME_CHOICES = Object.freeze({
     MIN: "min",
     MAX: "max",
+    RANDOM_OPTION: "randomOption",
+    OPTION_VALUE: "optionValue",
     NUMBER_FIELD_TYPE: "numberFieldType",
     LOCATION_FIELD_TYPE: "locationFieldType",
-    ACCURACY: "accuracy",
+    LOCATION_ACCURACY: "locationAccuracy",
     DATE_FORMAT: "dateFormat",
     TIME_FORMAT: "timeFormat",
     AREA_UNIT: "areaUnit",
     LENGTH_UNIT: "lengthUnit",
+    ALLOW_GALLERY: "allowGallery",
     IMAGE_RESOLUTION: "imageResolution",
-    VIDEO_RESOLUTION: "videoResolution"
+    VIDEO_RESOLUTION: "videoResolution",
+    COUNTRY_CODE: "countryCode",
+    STEP_SIZE: "stepSize",
+    MULTIPLE: "multiple",
+});
+
+let isValidateList = [
+    VALIDATION_NAME_CHOICES.MIN,
+    VALIDATION_NAME_CHOICES.MAX,
+    VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE,
+    VALIDATION_NAME_CHOICES.DATE_FORMAT,
+    VALIDATION_NAME_CHOICES.TIME_FORMAT,
+    VALIDATION_NAME_CHOICES.STEP_SIZE,
+    VALIDATION_NAME_CHOICES.MULTIPLE,
+    VALIDATION_NAME_CHOICES.OPTION_VALUE,
+];
+
+let IS_VALIDATE_LIST = Object.freeze(isValidateList);
+
+let EXTENSION_CHOICES = Object.freeze({
+    JPG: "jpg",
+    GIF: "gif",
+    JPEG: "jpeg",
+    PNG: "png",
+    MP3: "mp3",
+    WAV: "wav",
+    MP4: "mp4",
+    AVI: "avi",
+    FLV: "flv",
+    WMV: "wmv",
+    MOV: "mov",
+
 });
 
 let QuestionSchema = new mongoose.Schema({
@@ -233,14 +322,9 @@ let QuestionSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    multiple: {
-        type: Boolean,
-        default: false
+    validatorRules: {
+        type: Object,
     },
-    // extension: {
-    //     type: Object,
-    //     strict: false
-    // },
     validatorNames: [{
         type: String,
         enum: Object.values(VALIDATION_NAME_CHOICES)
@@ -280,14 +364,6 @@ let FormQuestionSchema = new mongoose.Schema({
         type: String,
         maxlength: [100, "Atmost 100 characters are allowed"]
     },
-    optionValue: {
-        type: Object,
-        strict: false
-    },
-    randomOption: {
-        type: Boolean,
-        strict: false
-    },
     validations: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: Validation
@@ -323,8 +399,8 @@ let DATE_FORMAT_CHOICES = Object.freeze({
 });
 
 let TIME_FORMAT_CHOICES = Object.freeze({
-    TWELVE: "twelve",
-    TWENTY_FOUR: "twenty-four",
+    TWELVE: "hh:mm:ss a",
+    TWENTY_FOUR: "HH:mm:ss",
 });
 
 let AREA_UNIT_CHOICES = Object.freeze({
@@ -351,36 +427,60 @@ let IMAGE_RESOLUTION_CHOICES = Object.freeze({
 });
 
 let VIDEO_RESOLUTION_CHOICES = Object.freeze({
-    HIGH: "high",
-    MEDIUM: "medium",
-    LOW: "low",
+    P1020: "1020p",
+    P720: "720p",
+    P480: "480p",
+});
+
+let COUNTRY_CODE_CHOICES = Object.freeze({
+    INDIA: "+91"
 });
 
 let ValidationSchema = new mongoose.Schema({
+    program: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Program',
+    },
+    question: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Question',
+    },
     name: {
         type: String,
-        index: true,
-        unique: true,
         enum: Object.values(VALIDATION_NAME_CHOICES),
         minlength: 3,
         maxlength: 20
     },
-    isValidate:{
+    isValidate: {
         type: Boolean,
         default: true
     },
     min: {
         type: Number,
+        min: 1,
         strict: false
     },
     max: {
         type: Number,
+        min: 1,
+        strict: false
+    },
+    optionValue: {
+        type: Object,
+        strict: false
+    },
+    randomOption: {
+        type: Boolean,
+        strict: false
+    },
+    multiple: {
+        type: Boolean,
         strict: false
     },
     numberFieldType: {
         type: String,
         enum: Object.values(NUMBER_FIELD_TYPE_CHOICES),
-        default: NUMBER_FIELD_TYPE_CHOICES.INT,
+        default: NUMBER_FIELD_TYPE_CHOICES.DECIMAL,
         strict: false
     },
     locationFieldType: {
@@ -389,7 +489,7 @@ let ValidationSchema = new mongoose.Schema({
         default: LOCATION_FIELD_TYPE_CHOICES.CURRENT,
         strict: false
     },
-    accuracy: {
+    locationAccuracy: {
         type: String,
         enum: Object.values(ACCURACY_CHOICES),
         default: ACCURACY_CHOICES.MEDIUM,
@@ -419,6 +519,15 @@ let ValidationSchema = new mongoose.Schema({
         default: LENGTH_UNIT_CHOICES.SQ_FT,
         strict: false
     },
+    allowGallery: {
+        type: Boolean,
+        strict: false
+    },
+    countryCode: [{
+        type: String,
+        enum: Object.values(COUNTRY_CODE_CHOICES),
+        strict: false
+    }],
     imageResolution: {
         type: String,
         enum: Object.values(IMAGE_RESOLUTION_CHOICES),
@@ -430,12 +539,109 @@ let ValidationSchema = new mongoose.Schema({
         enum: Object.values(VIDEO_RESOLUTION_CHOICES),
         default: VIDEO_RESOLUTION_CHOICES.LOW,
         strict: false
-    }
+    },
+    stepSize: {
+        type: Number,
+        min: 1,
+        strict: false
+    },
 });
 
 ValidationSchema.plugin(mongoose_timestamp);
 
 let Validation = mongoose.model('Validation', ValidationSchema);
+
+let VALIDATOR_TYPE_CHOICES = Object.freeze({
+    NUMBER: "number",
+    OBJECT: "object",
+    BOOLEAN: "boolean",
+    CHOICE: "choice",
+});
+
+let validatorsInfo = {};
+validatorsInfo[VALIDATION_NAME_CHOICES.MIN] = {
+    type: VALIDATOR_TYPE_CHOICES.NUMBER,
+    min: 1,
+    default: 1,
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.MAX] = {
+    type: VALIDATOR_TYPE_CHOICES.NUMBER,
+    min: 1,
+    default: 1,
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.OPTION_VALUE] = {
+    type: VALIDATOR_TYPE_CHOICES.OBJECT,
+    default: null,
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.RANDOM_OPTION] = {
+    type: VALIDATOR_TYPE_CHOICES.BOOLEAN,
+    default: false,
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.MULTIPLE] = {
+    type: VALIDATOR_TYPE_CHOICES.BOOLEAN,
+    default: false,
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: NUMBER_FIELD_TYPE_CHOICES,
+    default: NUMBER_FIELD_TYPE_CHOICES.INT
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.LOCATION_FIELD_TYPE] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: LOCATION_FIELD_TYPE_CHOICES,
+    default: LOCATION_FIELD_TYPE_CHOICES.CURRENT
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.LOCATION_ACCURACY] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: ACCURACY_CHOICES,
+    default: ACCURACY_CHOICES.MEDIUM
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.DATE_FORMAT] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: DATE_FORMAT_CHOICES,
+    default: DATE_FORMAT_CHOICES.DDMMYYYY
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.TIME_FORMAT] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: TIME_FORMAT_CHOICES,
+    default: TIME_FORMAT_CHOICES.TWELVE
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.AREA_UNIT] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: AREA_UNIT_CHOICES,
+    default: AREA_UNIT_CHOICES.SQ_MT
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.LENGTH_UNIT] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: LENGTH_UNIT_CHOICES,
+    default: LENGTH_UNIT_CHOICES.MT
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.ALLOW_GALLERY] = {
+    type: VALIDATOR_TYPE_CHOICES.BOOLEAN,
+    default: true
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.COUNTRY_CODE] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: COUNTRY_CODE_CHOICES,
+    default: COUNTRY_CODE_CHOICES.INDIA
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.IMAGE_RESOLUTION] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: IMAGE_RESOLUTION_CHOICES,
+    default: IMAGE_RESOLUTION_CHOICES.MEDIUM
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.VIDEO_RESOLUTION] = {
+    type: VALIDATOR_TYPE_CHOICES.CHOICE,
+    choices: VIDEO_RESOLUTION_CHOICES,
+    default: VIDEO_RESOLUTION_CHOICES.P720
+};
+validatorsInfo[VALIDATION_NAME_CHOICES.STEP_SIZE] = {
+    type: VALIDATOR_TYPE_CHOICES.NUMBER,
+    min: 1,
+    default: 1
+};
+
+let VALIDATOR_INFO = Object.freeze(validatorsInfo);
 
 export {
     QUESTION_TYPE_CHOICES,
@@ -449,6 +655,11 @@ export {
     TIME_FORMAT_CHOICES,
     ACCURACY_CHOICES,
     LOCATION_FIELD_TYPE_CHOICES,
+    EXTENSION_CHOICES,
+    VALIDATOR_TYPE_CHOICES,
+    NUMBER_FIELD_TYPE_CHOICES,
+    VALIDATOR_INFO,
+    IS_VALIDATE_LIST
 };
 
 export {User, Program, Form, Beneficiary, Question, FormQuestion, Validation};

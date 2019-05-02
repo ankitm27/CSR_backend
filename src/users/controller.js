@@ -1,8 +1,14 @@
 import jwt from 'jsonwebtoken';
 import {jwtSecret} from "../settings/config";
-import {BeneficiaryRepository, FormRepository, ProgramRepository, UserRepository} from "./repository";
-import {compareHash, makeHash} from "../utils/helpers";
-import {User} from "./model";
+import {
+    BeneficiaryRepository,
+    FormQuestionRepository,
+    FormRepository,
+    ProgramRepository, QuestionRepository,
+    UserRepository
+} from "./repository";
+import {compareHash, makeHash, getValidationObjects} from "../utils/helpers";
+import {Question, User} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
 import {ROLE_CHOICES} from "./model";
@@ -106,6 +112,16 @@ export class ProgramController extends BaseController {
         data.user = req.user._id;
         return data;
     }
+
+    async getQuestion(req, res, next) {
+        try {
+            let data = req.body;
+            let program = await this.repository.get_object_or_404(data.id);
+            sendResponse(res, responseCodes.HTTP_200_OK, null, await program.questions);
+        }catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 
@@ -128,3 +144,37 @@ export class BeneficiaryController extends BaseController {
     }
 }
 
+export class QuestionController extends BaseController {
+    constructor() {
+        super(QuestionRepository);
+    }
+
+    async getQuestion(req, res, next) {
+        let questions = await Question.find({});
+        sendResponse(res, responseCodes.HTTP_200_OK, null, questions);
+    }
+}
+
+export class FormQuestionController {
+    constructor() {
+    }
+
+    async addQuestion(req, res, next) {
+        let data = req.body;
+        let questionRespository = new QuestionRepository();
+        let question = await questionRespository.get_object_or_404(res, data.question);
+        let [errors, validations] = await getValidationObjects(data.program, question, data);
+        if (errors.length != 0) {
+            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
+        }else {
+            let formQuestionRepository = new FormQuestionRepository();
+            let formQuestion = await formQuestionRepository.createFormQuestion(data, validations);
+            if(formQuestion.n == 1) {
+                sendResponse(res, responseCodes.HTTP_200_OK, null, {"created": true});
+            }else {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Error while creation");
+            }
+
+        }
+    }
+}
