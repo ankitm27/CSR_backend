@@ -117,9 +117,9 @@ export async function getValidationObjects(program_id, question, data) {
     return [errors, validations];
 }
 
-export async function get_Validators(question, reqData) {
+export async function get_Validators(question, validators) {
     let data = {};
-    let validations = await Validation.find({_id: {$in: reqData.validators }});
+    let validations = await Validation.find({_id: {$in: validators }});
     validations.forEach((validation) => {
         data[validation.name] = validation[validation.name];
     });
@@ -128,7 +128,7 @@ export async function get_Validators(question, reqData) {
 
 export async function validateAnswer(question, data) {
     try {
-        let validators = await get_Validators(question, data);
+        let validators = await get_Validators(question, data.validators);
         let questionType = question.questionType;
         let answer = data.answer;
         let date = Date.now();

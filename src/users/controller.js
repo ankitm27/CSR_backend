@@ -7,7 +7,7 @@ import {
     ProgramRepository, QuestionRepository,
     UserRepository
 } from "./repository";
-import {compareHash, makeHash, getValidationObjects, validateAnswer} from "../utils/helpers";
+import {compareHash, makeHash, getValidationObjects, validateAnswer, get_Validators} from "../utils/helpers";
 import {Question, User, Validation} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
@@ -20,17 +20,21 @@ export class UserController extends BaseController{
     }
 
     async login(req, res, next) {
-        let data = req.body;
-        let user = await User.findOne({"email": data.email});
-        if (user == null) {
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Email not found");
-        } else {
-            if (compareHash(data.password, user.password) == false) {
-                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
+        try {
+            let data = req.body;
+            let user = await User.findOne({"email": data.email});
+            if (user == null) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Email not found");
             } else {
-                let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: '24h'});
-                sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token});
+                if (compareHash(data.password, user.password) == false) {
+                    sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
+                } else {
+                    let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: '24h'});
+                    sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token});
+                }
             }
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
         }
     }
 
@@ -50,25 +54,29 @@ export class UserController extends BaseController{
     }
 
     async register(req, res, next) {
-        let data = req.body;
-        let role = req.params.role;
-        if(Object.values(ROLE_CHOICES).includes(role)) {
-            if (data.password != data.confirmPassword) {
-                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Both password did not match");
+        try {
+            let data = req.body;
+            let role = req.params.role;
+            if(Object.values(ROLE_CHOICES).includes(role)) {
+                if (data.password != data.confirmPassword) {
+                    sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Both password did not match");
+                }
+                data.password = makeHash(data.password);
+                if (await User.findOne({'email': data.email}) != null) {
+                    sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this email");
+                } else if (await User.findOne({'mobile': data.mobile}) != null) {
+                    sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this mobile");
+                } else {
+                    data.role = role;
+                    data.allowLoggedIn = role == ROLE_CHOICES.ADMIN
+                    let user = await User.create(data);
+                    sendResponse(res, responseCodes.HTTP_200_OK, null, {});
+                }
+            }else{
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid role provided");
             }
-            data.password = makeHash(data.password);
-            if (await User.findOne({'email': data.email}) != null) {
-                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this email");
-            } else if (await User.findOne({'mobile': data.mobile}) != null) {
-                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this mobile");
-            } else {
-                data.role = role;
-                data.allowLoggedIn = role == ROLE_CHOICES.ADMIN
-                let user = await User.create(data);
-                sendResponse(res, responseCodes.HTTP_200_OK, null, {});
-            }
-        }else{
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid role provided");
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
         }
     }
 
@@ -123,17 +131,22 @@ export class ProgramController extends BaseController {
     }
 
     async getQuestion(req, res, next) {
-        try {
-            let program = await this.repository.get_object_or_404(res, req.params.uid);
-            let questions = await program.questions.toObject();
-            let response = await questions.map(async(question) => {
-                question.validations = await Validation.find({_id: {$in: question.validations }});
-                return await question;
-            });
-            sendResponse(res, responseCodes.HTTP_200_OK, null, await Promise.all(response));
-        }catch (e) {
-            console.log(e);
-        }
+        let program = await this.repository.get_object_or_404(res, req.params.uid);
+        let programQuestions = await program.questions.toObject();
+        let questionRespository = new QuestionRepository();
+        let response = await programQuestions.map(async(programQuestion) => {
+            let question = await questionRespository.get_object_or_404(res, programQuestion.question);
+            programQuestion.validations = await get_Validators(question, programQuestion.validations);
+            programQuestion.questionType = await question.questionType;
+            programQuestion.isActive = await question.isActive;
+            return await programQuestion;
+        });
+        sendResponse(res, responseCodes.HTTP_200_OK, null, await Promise.all(response));
+    }
+
+    async getBenefeciaries(req, res, next) {
+        let program = await this.repository.get_object_or_404(res, req.params.uid);
+
     }
 }
 
@@ -174,7 +187,7 @@ export class QuestionController extends BaseController {
     }
 }
 
-export class FormQuestionController {
+export class ProgramQuestionController {
     constructor() {
     }
 

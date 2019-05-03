@@ -3,7 +3,7 @@ import express from 'express';
 import {
     BeneficiaryController,
     FormController,
-    FormQuestionController,
+    ProgramQuestionController,
     ProgramController, QuestionController,
     UserController
 } from "./controller";
@@ -17,7 +17,7 @@ let userController = new UserController();
 let programController = new ProgramController();
 let formController = new FormController();
 let beneficiaryController = new BeneficiaryController();
-let formQuestionController = new FormQuestionController();
+let programQuestionController = new ProgramQuestionController();
 let questionController = new QuestionController();
 
 /* GET users listing. */
@@ -65,6 +65,9 @@ router.delete('/program/:uid', (req, res, next) => {
 router.get('/program/:uid/questions', (req, res, next) => {
     programController.getQuestion(req, res, next);
 });
+router.get('/program/:uid/beneficiaries', (req, res, next) => {
+    programController.getBenefeciaries(req, res, next);
+});
 
 
 router.get('/form', (req, res, next) => {
@@ -107,11 +110,11 @@ router.get('/question/', (req, res, next) => {
     questionController.getList(req, res, next);
 });
 
-router.post('/form-question/', (req, res, next) => {
-    formQuestionController.addQuestion(req, res, next);
+router.post('/program-question/', (req, res, next) => {
+    programQuestionController.addQuestion(req, res, next);
 });
 router.post('/answers/', (req, res, next) => {
-    formQuestionController.addAnswer(req, res, next);
+    programQuestionController.addAnswer(req, res, next);
 });
 // Classes are used just like ES5 constructor functions:
 
