@@ -7,8 +7,8 @@ import {
     ProgramRepository, QuestionRepository,
     UserRepository
 } from "./repository";
-import {compareHash, makeHash, getValidationObjects} from "../utils/helpers";
-import {Question, User} from "./model";
+import {compareHash, makeHash, getValidationObjects, validateAnswer} from "../utils/helpers";
+import {Question, User, Validation} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
 import {ROLE_CHOICES} from "./model";
@@ -51,15 +51,21 @@ export class UserController extends BaseController{
 
     async register(req, res, next) {
         let data = req.body;
-        data.password = makeHash(data.password);
-        if (await User.findOne({'email': data.email}) != null) {
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this email");
-        } else if (await User.findOne({'mobile': data.mobile}) != null) {
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this mobile");
-        } else {
-            data.role = ROLE_CHOICES.VOLUNTEER;
-            let user = await User.create(data);
-            sendResponse(res, responseCodes.HTTP_200_OK, null, user);
+        let role = req.params.role;
+        if(Object.values(ROLE_CHOICES).includes(role)) {
+            data.password = makeHash(data.password);
+            if (await User.findOne({'email': data.email}) != null) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this email");
+            } else if (await User.findOne({'mobile': data.mobile}) != null) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this mobile");
+            } else {
+                data.role = role;
+                data.allowLoggedIn = role == ROLE_CHOICES.ADMIN
+                let user = await User.create(data);
+                sendResponse(res, responseCodes.HTTP_200_OK, null, {});
+            }
+        }else{
+            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid role provided");
         }
     }
 
@@ -115,9 +121,13 @@ export class ProgramController extends BaseController {
 
     async getQuestion(req, res, next) {
         try {
-            let data = req.body;
-            let program = await this.repository.get_object_or_404(data.id);
-            sendResponse(res, responseCodes.HTTP_200_OK, null, await program.questions);
+            let program = await this.repository.get_object_or_404(res, req.params.uid);
+            let questions = await program.questions.toObject();
+            let response = await questions.map(async(question) => {
+                question.validations = await Validation.find({_id: {$in: question.validations }});
+                return await question;
+            });
+            sendResponse(res, responseCodes.HTTP_200_OK, null, await Promise.all(response));
         }catch (e) {
             console.log(e);
         }
@@ -141,6 +151,12 @@ export class FormController extends BaseController {
 export class BeneficiaryController extends BaseController {
     constructor() {
         super(BeneficiaryRepository);
+    }
+
+    performCreate(req) {
+        let data = req.body;
+        data.user = [req.user._id];
+        return data;
     }
 }
 
@@ -174,7 +190,30 @@ export class FormQuestionController {
             }else {
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Error while creation");
             }
+        }
+    }
 
+    async addAnswer(req, res, next) {
+        let data = req.body;
+        let questionRepository = new QuestionRepository();
+        let errors = [];
+        data.forEach(async(datum) => {
+            let question = await questionRepository.get_object_or_404(res, datum.question);
+            let [success, error] = await validateAnswer(question, datum);
+            if (!success) {
+                errors.push({
+                    "question": datum.question,
+                    "program": datum.program,
+                    "error": error
+                })
+            }
+        });
+        if (errors.length == 0) {
+            let formQuestionRepository = new FormQuestionRepository();
+            let answer = await formQuestionRepository.createAnswer(data);
+            sendResponse(res, responseCodes.HTTP_200_OK, null, answer)
+        }else{
+            sendResponse(res, responseCodes.HTTP_200_OK, errors)
         }
     }
 }

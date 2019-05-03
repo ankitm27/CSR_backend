@@ -1,5 +1,5 @@
 import {BaseRepository} from "../contrib/repository";
-import {Beneficiary, Form, FormQuestion, Program, User, Question, Validation} from "./model";
+import {Beneficiary, Form, FormQuestion, Program, User, Question, Validation, Answer} from "./model";
 import {getValidators} from "../utils/helpers";
 import mongoose from "mongoose";
 
@@ -81,6 +81,17 @@ export class FormQuestionRepository{
             };
             let program = await Program.updateOne({_id: data.program}, {$push: {questions: programQuestion}});
             return await program;
+        }catch (e) {
+            console.log(e);
+        }
+    }
+
+    async createAnswer(data) {
+        try {
+            let response = await data.map(async(datum) => {
+                return await Answer.create(datum);
+            });
+            return await Promise.all(response);
         }catch (e) {
             console.log(e);
         }

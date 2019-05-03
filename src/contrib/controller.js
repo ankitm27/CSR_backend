@@ -46,9 +46,13 @@ export class BaseController {
     }
 
     async create(req, res, next) {
-        let data = await this.performCreate(req);
-        let response = await this.repository.create(data);
-        sendResponse(res, responseCodes.HTTP_201_CREATED, null, response)
+        try{
+            let data = await this.performCreate(req);
+            let response = await this.repository.create(data);
+            sendResponse(res, responseCodes.HTTP_201_CREATED, null, response)
+        }catch (e) {
+            console.log(e);
+        }
     }
 
     async update(req, res, next) {

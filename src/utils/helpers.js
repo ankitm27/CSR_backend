@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import {dsn} from "../settings/config";
 import {
     IS_VALIDATE_LIST, NUMBER_FIELD_TYPE_CHOICES,
-    QUESTION_TYPE_CHOICES,
+    QUESTION_TYPE_CHOICES, Validation,
     VALIDATION_NAME_CHOICES,
     VALIDATOR_INFO,
     VALIDATOR_TYPE_CHOICES
@@ -11,6 +11,7 @@ import {
 import util from "util";
 import moment from "moment";
 import {emailRegex, mobileRegex} from "./customRegex";
+import responseCodes, {sendResponse} from "../contrib/response.py";
 
 Sentry.init({dsn: dsn});
 
@@ -116,86 +117,105 @@ export async function getValidationObjects(program_id, question, data) {
     return [errors, validations];
 }
 
-export async function answerValidation(question, formQuestion, validators, data) {
-    let questionType = question.questionType;
-    let answer = data.answer;
-    let date = Date.now();
-    if (questionType == QUESTION_TYPE_CHOICES.CHOICE) {
-        answer = answer.split('#');
-    }else if ([QUESTION_TYPE_CHOICES.NUMBER, QUESTION_TYPE_CHOICES.SCALE,
-        QUESTION_TYPE_CHOICES.RATING].includes(questionType)) {
-        if (isNaN(answer)) {
-            return [false, "Not a number"];
+export async function get_Validators(question, reqData) {
+    let data = {};
+    let validations = await Validation.find({_id: {$in: reqData.validators }});
+    validations.forEach((validation) => {
+        data[validation.name] = validation[validation.name];
+    });
+    return await data;
+}
+
+export async function validateAnswer(question, data) {
+    try {
+        let validators = await get_Validators(question, data);
+        let questionType = question.questionType;
+        let answer = data.answer;
+        let date = Date.now();
+        if (questionType == QUESTION_TYPE_CHOICES.CHOICE) {
+            answer = answer.split('#');
+        }else if ([QUESTION_TYPE_CHOICES.NUMBER, QUESTION_TYPE_CHOICES.SCALE,
+            QUESTION_TYPE_CHOICES.RATING].includes(questionType)) {
+            if (isNaN(answer)) {
+                return [false, "Not a number"];
+            }
+            answer = Number(answer);
+        }else if (questionType == QUESTION_TYPE_CHOICES.DATE) {
+            if(!moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT]).isValid()) {
+                return [false, "Invalid date format"];
+            }
+            answer = moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT])
+        }else if (questionType == QUESTION_TYPE_CHOICES.TIME) {
+            if(!moment("DD/MM/YYYY" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT]).isValid()) {
+                return [false, "Invalid date format"];
+            }
+            answer = moment("01/01/2019" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT])
+        }else if(questionType == QUESTION_TYPE_CHOICES.PHONE && !mobileRegex.test(answer)) {
+            return [false, "Invalid phone number"];
+        }else if(questionType == QUESTION_TYPE_CHOICES.EMAIL && !emailRegex.test(answer)) {
+            return [false, "Invalid email address"];
+        }else if(questionType == QUESTION_TYPE_CHOICES.RATING && (answer < 0 || answer > 5)) {
+            return [false, "Invalid ratings"];
         }
-        answer = Number(answer);
-    }else if (questionType == QUESTION_TYPE_CHOICES.DATE) {
-        if(!moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT]).isValid()) {
-            return [false, "Invalid date format"];
+
+        if (answer == undefined || answer == null) {
+            return [false, "Answer is required"];
+        }else {
+            Object.keys(validators).forEach((validatorKey) => {
+                let validatorValue = validators[validatorKey];
+                if(validatorKey == VALIDATION_NAME_CHOICES.MIN) {
+                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
+                        answers.length > validatorValue) {
+                        return [false, util.format("Select more than to %s choice", validatorValue - 1)];
+                    }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
+                        return [false, util.format("String length must more than %s characters", validatorValue - 1)];
+                    }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer > validatorValue) {
+                        return [false, util.format("Number must greater than %s", validatorValue - 1)];
+                    }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 && answer > validatorValue) {
+                        return [false, util.format("Date must greater than or equal to %s", String(answer))];
+                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 && answer > validatorValue) {
+                        return [false, util.format("Date must greater than or equal to %s", String(answer))];
+                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
+                        answer > moment(validatorValue).date(1).month(1).year(2019)) {
+                        return [false, util.format("Time must greater than or equal to %s", String(answer))];
+                    }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
+                        answer > validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
+                        return [false, util.format("Value must greater than %s", String(answer))]
+                    }
+                }else if(validatorKey == VALIDATION_NAME_CHOICES.MAX) {
+                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
+                        answers.length < validatorValue) {
+                        return [false, util.format("Select less than to %s choice", validatorValue - 1)];
+                    }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length < validatorValue) {
+                        return [false, util.format("String length must less than %s characters", validatorValue - 1)];
+                    }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer < validatorValue) {
+                        return [false, util.format("Number must less than %s", validatorValue - 1)];
+                    }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 && answer < validatorValue) {
+                        return [false, util.format("Date must less than or equal to %s", String(answer))];
+                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 && answer < validatorValue) {
+                        return [false, util.format("Date must less than or equal to %s", String(answer))];
+                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
+                        answer < moment(validatorValue).date(1).month(1).year(2019)) {
+                        return [false, util.format("Time must less than or equal to %s", String(answer))];
+                    }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
+                        answer < validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
+                        return [false, util.format("Value must less than %s", String(answer))]
+                    }
+                }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && answer.length > 1) {
+                    return [false, "Select single choice"];
+                }else if(validatorKey == VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE &&
+                    validators[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT &&
+                    !Number.isInteger(answer)) {
+                    return [false, "Only integer value is allowed"];
+                }else if(validatorKey == VALIDATION_NAME_CHOICES.OPTION_VALUE) {
+                    const requiredValues = new Set(Object.values(validatorValue));
+                    const givenValues = new Set(answer);
+                }
+            });
         }
-        answer = moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT])
-    }else if (questionType == QUESTION_TYPE_CHOICES.TIME) {
-        if(!moment("DD/MM/YYYY" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT]).isValid()) {
-            return [false, "Invalid date format"];
-        }
-        answer = moment("01/01/2019" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT])
-    }else if(questionType == QUESTION_TYPE_CHOICES.PHONE && !mobileRegex.test(answer)) {
-        return [false, "Invalid phone number"];
-    }else if(questionType == QUESTION_TYPE_CHOICES.EMAIL && !emailRegex.test(answer)) {
-        return [false, "Invalid email address"];
-    }else if(questionType == QUESTION_TYPE_CHOICES.RATING && (answer < 0 || answer > 5)) {
-        return [false, "Invalid ratings"];
+        return [true, null]
+    }catch (e) {
+        console.log(e);
     }
 
-    if (answer == undefined || answer == null) {
-        return [false, "Answer is required"];
-    }else {
-        Object.keys(validators).forEach((validatorKey) => {
-            let validatorValue = validators[validatorKey];
-            if(validatorKey == VALIDATION_NAME_CHOICES.MIN) {
-                if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
-                    answers.length > validatorValue) {
-                    return [false, util.format("Select more than to %s choice", validatorValue - 1)];
-                }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
-                    return [false, util.format("String length must more than %s characters", validatorValue - 1)];
-                }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer > validatorValue) {
-                    return [false, util.format("Number must greater than %s", validatorValue - 1)];
-                }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 && answer > validatorValue) {
-                    return [false, util.format("Date must greater than or equal to %s", String(answer))];
-                }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 && answer > validatorValue) {
-                    return [false, util.format("Date must greater than or equal to %s", String(answer))];
-                }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
-                    answer > moment(validatorValue).date(1).month(1).year(2019)) {
-                    return [false, util.format("Time must greater than or equal to %s", String(answer))];
-                }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
-                    answer > validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
-                    return [false, util.format("Value must greater than %s", String(answer))]
-                }
-            }else if(validatorKey == VALIDATION_NAME_CHOICES.MAX) {
-                if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
-                    answers.length < validatorValue) {
-                    return [false, util.format("Select less than to %s choice", validatorValue - 1)];
-                }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length < validatorValue) {
-                    return [false, util.format("String length must less than %s characters", validatorValue - 1)];
-                }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer < validatorValue) {
-                    return [false, util.format("Number must less than %s", validatorValue - 1)];
-                }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 && answer < validatorValue) {
-                    return [false, util.format("Date must less than or equal to %s", String(answer))];
-                }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 && answer < validatorValue) {
-                    return [false, util.format("Date must less than or equal to %s", String(answer))];
-                }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
-                    answer < moment(validatorValue).date(1).month(1).year(2019)) {
-                    return [false, util.format("Time must less than or equal to %s", String(answer))];
-                }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
-                    answer < validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
-                    return [false, util.format("Value must less than %s", String(answer))]
-                }
-            }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && answer.length > 1) {
-                return [false, "Select single choice"];
-            }else if(validatorKey == VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE &&
-                validators[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT &&
-                !Number.isInteger(answer)) {
-                return [false, "Only integer value is allowed"];
-            }
-        });
-    }
 }

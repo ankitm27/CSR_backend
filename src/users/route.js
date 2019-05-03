@@ -24,9 +24,9 @@ let questionController = new QuestionController();
 router.post('/load-questions', (req, res, next) => {
     loadQuestions(req, res, next);
 });
-router.post('/login', userController.login);
-router.post('/register', userController.register);
 
+router.post('/:role/register', userController.register);
+router.post('/admin/login', userController.login);
 router.post('/volunteer/login', (req, res, next) => {
     userController.volunteerLogin(req, res, next);
 });
@@ -109,6 +109,9 @@ router.get('/question/', (req, res, next) => {
 
 router.post('/form-question/', (req, res, next) => {
     formQuestionController.addQuestion(req, res, next);
+});
+router.post('/answers/', (req, res, next) => {
+    formQuestionController.addAnswer(req, res, next);
 });
 // Classes are used just like ES5 constructor functions:
 

@@ -18,7 +18,7 @@ let BeneficiarySchema = new mongoose.Schema({
         minlength: [12, "Aadhaar number length must be greater than equal to 12"],
         maxlength: [12, "Aadhaar number length must be less than equal to 12"],
         validate: {
-            validator: aadhaarNumbe => aadhaarNumberRegex.test(aadhaarNumbe),
+            validator: aadhaarNumber => !isNaN(aadhaarNumber),
             message: props => `${props.value} is not a valid aadhaar number`
         }
     },
@@ -38,6 +38,10 @@ let BeneficiarySchema = new mongoose.Schema({
         enum: ['female', 'male', 'trans'],
         maxlength: [10, "More than 10 characters are not allowed"]
     },
+    user: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 });
 
 BeneficiarySchema.plugin(mongoose_timestamp);
@@ -121,10 +125,9 @@ let UserSchema = new mongoose.Schema({
             message: props => `${props.value} is not a valid mobile`
         }
     },
-    beneficiaries: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: Beneficiary,
-    }]
+    organizationType: {
+        type: String
+    }
 });
 
 UserSchema.plugin(mongoose_timestamp);
@@ -152,6 +155,7 @@ let ProgramSchema = new mongoose.Schema({
         min: Date('1950-01-01T00:00:00')
     },
     questions: [{
+        // _id: true,
         question: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Question',
@@ -662,4 +666,29 @@ export {
     IS_VALIDATE_LIST
 };
 
-export {User, Program, Form, Beneficiary, Question, FormQuestion, Validation};
+
+let AnswerSchema = new mongoose.Schema({
+    program: {
+        required: [true, 'Program is required'],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Program,
+    },
+    question: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Question',
+    },
+    beneficiary: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Beneficiary',
+    },
+    answer: {
+        type: String,
+    }
+});
+
+AnswerSchema.plugin(mongoose_timestamp);
+
+let Answer = mongoose.model('Answer', AnswerSchema);
+
+
+export {User, Program, Form, Beneficiary, Question, FormQuestion, Validation, Answer};
