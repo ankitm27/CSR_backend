@@ -53,6 +53,9 @@ export class UserController extends BaseController{
         let data = req.body;
         let role = req.params.role;
         if(Object.values(ROLE_CHOICES).includes(role)) {
+            if (data.password != data.confirmPassword) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Both password did not match");
+            }
             data.password = makeHash(data.password);
             if (await User.findOne({'email': data.email}) != null) {
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this email");

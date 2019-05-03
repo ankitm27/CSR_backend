@@ -1,6 +1,7 @@
 import {emailRegex, mobileRegex, urlRegex} from '../utils/customRegex';
 import mongoose from "mongoose";
 import mongoose_timestamp from "mongoose-timestamp";
+// import uuidv4 from "uuid/v4";
 
 let ROLE_CHOICES = Object.freeze({
     ADMIN: "admin",
@@ -155,7 +156,7 @@ let ProgramSchema = new mongoose.Schema({
         min: Date('1950-01-01T00:00:00')
     },
     questions: [{
-        // _id: true,
+        // id: { type: mongoose.Schema.Types.UUID, default: uuidv4 },
         question: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Question',
