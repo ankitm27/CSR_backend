@@ -13,6 +13,7 @@ import {loadQuestions} from "../load_data/question_valdators";
 
 let router = express.Router();
 
+let tokenMiddleWare = new TokenAuthenticationMiddleware();
 let userController = new UserController();
 let programController = new ProgramController();
 let formController = new FormController();
@@ -25,15 +26,19 @@ router.post('/load-questions', (req, res, next) => {
     loadQuestions(req, res, next);
 });
 
-router.post('/:role/register', userController.register);
-router.post('/admin/login', userController.login);
+router.post('/:role/register', (req, res, next) => {
+    userController.register(req, res, next);
+});
+router.post('/admin/login', (req, res, next) => {
+    userController.login(req, res, next);
+});
 router.post('/volunteer/login', (req, res, next) => {
     userController.volunteerLogin(req, res, next);
 });
 
-let tokenMiddleWare = new TokenAuthenticationMiddleware();
-
-router.use(tokenMiddleWare.checkToken);
+router.use((req, res, next) => {
+    tokenMiddleWare.checkToken(req, res, next);
+});
 
 router.get('/dashboard', (req, res, next) => {
     userController.getDashoardDetails(req, res, next);
