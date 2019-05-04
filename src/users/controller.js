@@ -8,7 +8,7 @@ import {
     UserRepository
 } from "./repository";
 import {compareHash, makeHash, getValidationObjects, validateAnswer, get_Validators} from "../utils/helpers";
-import {Question, User, Validation} from "./model";
+import {Answer, Program, Question, User, Validation} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
 import {ROLE_CHOICES} from "./model";
@@ -34,6 +34,7 @@ export class UserController extends BaseController{
                 }
             }
         }catch (e) {
+            console.log(e);
             sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
         }
     }
@@ -116,6 +117,43 @@ export class UserController extends BaseController{
             console.log(e);
         }
     }
+
+    async getDashoardDetails(req, res, next) {
+        try{
+            let aggregateData = (await Program.aggregate(
+                [
+                    {
+                        $match: {
+                            user: req.user._id
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            goodAvg: {$avg: "$good"},
+                            badAvg: {$avg: "$bad"},
+                            averageAvg: {$avg: "$average"},
+                            goalAchievedAvg: {$avg: "$goalAchieved"},
+                            totalFunding: {$sum: "$funding"}
+                        }
+                    }
+                ]
+            ))[0];
+            let totalProgram = await Program.find({user: req.user._id}).countDocuments();
+            let data = {
+                "totalProgram": totalProgram,
+                "totalFunding": aggregateData.totalFunding,
+                "goodAvg": aggregateData.goodAvg,
+                "badAvg": aggregateData.badAvg,
+                "averageAvg": aggregateData.averageAvg,
+                "goalAchievedAvg": aggregateData.goalAchievedAvg,
+                "programs": await Program.find({user: req.user._id}, {questions: 0})
+            };
+            sendResponse(res, responseCodes.HTTP_200_OK, null, data);
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
+        }
+    }
 }
 
 
@@ -127,6 +165,9 @@ export class ProgramController extends BaseController {
     performCreate(req) {
         let data = req.body;
         data.user = req.user._id;
+        data.average = Math.floor(Math.random() * 100) + 0;
+        data.good = Math.floor(Math.random() * (100 - data.average)) + 0;
+        data.bad = 100 - data.average - data.good;
         return data;
     }
 
@@ -145,8 +186,14 @@ export class ProgramController extends BaseController {
     }
 
     async getBenefeciaries(req, res, next) {
-        let program = await this.repository.get_object_or_404(res, req.params.uid);
-
+        try {
+            let data = await {
+                "totalBenefeciaries": await Answer.find({program: req.params.uid}).distinct('beneficiary').countDocuments()
+            };
+            sendResponse(res, responseCodes.HTTP_200_OK, null, data);
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
+        }
     }
 }
 

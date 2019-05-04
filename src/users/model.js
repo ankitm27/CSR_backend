@@ -135,6 +135,11 @@ UserSchema.plugin(mongoose_timestamp);
 
 let User = mongoose.model('User', UserSchema);
 
+let STATUS_CHOICES = Object.freeze({
+    OPEN: 'open',
+    CLOSED: 'closed'
+});
+
 let ProgramSchema = new mongoose.Schema({
     user: {
         required: [true, 'User is required'],
@@ -151,9 +156,50 @@ let ProgramSchema = new mongoose.Schema({
         type: String,
         maxlength: [500, "Atmost 500 characters are allowed"]
     },
-    endEate: {
+    startDate: {
         type: Date,
-        min: Date('1950-01-01T00:00:00')
+        min: Date('1950-01-01T00:00:00Z')
+    },
+    status: {
+        type: String,
+        enum: Object.values(STATUS_CHOICES),
+        default: STATUS_CHOICES.OPEN
+    },
+    goal: {
+        type: String,
+        maxlength: [200, "Atmost 200 characters are allowed"]
+    },
+    goalAchieved: {
+        type: Number,
+        min: [0, "Percentage should not less than 0"],
+        max: [100, "Percentage should not greater than 100"],
+        default: 0
+    },
+    endDate: {
+        type: Date,
+        min: Date('1950-01-01T00:00:00Z')
+    },
+    funding: {
+        type: Number,
+        min: [0, "Funding should not less than 0"]
+    },
+    average: {
+        type: Number,
+        min: [0, "Percentage should not less than 0"],
+        max: [100, "Percentage should not greater than 100"],
+        default: 0
+    },
+    good: {
+        type: Number,
+        min: [0, "Percentage should not less than 0"],
+        max: [100, "Percentage should not greater than 100"],
+        default: 0
+    },
+    bad: {
+        type: Number,
+        min: [0, "Percentage should not less than 0"],
+        max: [100, "Percentage should not greater than 100"],
+        default: 0
     },
     questions: [{
         _id: {
@@ -667,7 +713,8 @@ export {
     VALIDATOR_TYPE_CHOICES,
     NUMBER_FIELD_TYPE_CHOICES,
     VALIDATOR_INFO,
-    IS_VALIDATE_LIST
+    IS_VALIDATE_LIST,
+    STATUS_CHOICES
 };
 
 

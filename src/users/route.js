@@ -35,6 +35,9 @@ let tokenMiddleWare = new TokenAuthenticationMiddleware();
 
 router.use(tokenMiddleWare.checkToken);
 
+router.get('/dashboard', (req, res, next) => {
+    userController.getDashoardDetails(req, res, next);
+});
 router.post('/volunteer/reset-password', (req, res, next) => {
     userController.resetPassword(req, res, next);
 });
