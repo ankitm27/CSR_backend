@@ -45,7 +45,7 @@ export function isEmpty(obj) {
     return true;
 }
 
-export function getValidators(validatorNames) {
+export function getValidations(validatorNames) {
     return validatorNames.map((validatorName) => {
         let data = {};
         data[validatorName] = VALIDATOR_INFO[validatorName];
@@ -117,7 +117,7 @@ export async function getValidationObjects(program_id, question, data) {
     return [errors, validations];
 }
 
-export async function get_Validators(question, validators) {
+export async function getValidators(question, validators) {
     let data = {};
     let validations = await Validation.find({_id: {$in: validators }});
     validations.forEach((validation) => {
@@ -128,7 +128,7 @@ export async function get_Validators(question, validators) {
 
 export async function validateAnswer(question, data) {
     try {
-        let validators = await get_Validators(question, data.validators);
+        let validations = await getValidators(question, data.validations);
         let questionType = question.questionType;
         let answer = data.answer;
         let date = Date.now();
@@ -141,15 +141,15 @@ export async function validateAnswer(question, data) {
             }
             answer = Number(answer);
         }else if (questionType == QUESTION_TYPE_CHOICES.DATE) {
-            if(!moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT]).isValid()) {
+            if(!moment(answer, validations[VALIDATION_NAME_CHOICES.DATE_FORMAT]).isValid()) {
                 return [false, "Invalid date format"];
             }
-            answer = moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT])
+            answer = moment(answer, validations[VALIDATION_NAME_CHOICES.DATE_FORMAT])
         }else if (questionType == QUESTION_TYPE_CHOICES.TIME) {
-            if(!moment("DD/MM/YYYY" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT]).isValid()) {
+            if(!moment("DD/MM/YYYY" + answer, "DD/MM/YYYY", validations[VALIDATION_NAME_CHOICES.TIME_FORMAT]).isValid()) {
                 return [false, "Invalid date format"];
             }
-            answer = moment("01/01/2019" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT])
+            answer = moment("01/01/2019" + answer, "DD/MM/YYYY", validations[VALIDATION_NAME_CHOICES.TIME_FORMAT])
         }else if(questionType == QUESTION_TYPE_CHOICES.PHONE && !mobileRegex.test(answer)) {
             return [false, "Invalid phone number"];
         }else if(questionType == QUESTION_TYPE_CHOICES.EMAIL && !emailRegex.test(answer)) {
@@ -161,10 +161,10 @@ export async function validateAnswer(question, data) {
         if (answer == undefined || answer == null) {
             return [false, "Answer is required"];
         }else {
-            Object.keys(validators).forEach((validatorKey) => {
-                let validatorValue = validators[validatorKey];
+            Object.keys(validations).forEach((validatorKey) => {
+                let validatorValue = validations[validatorKey];
                 if(validatorKey == VALIDATION_NAME_CHOICES.MIN) {
-                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
+                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validations[VALIDATION_NAME_CHOICES.MULTIPLE] &&
                         answers.length > validatorValue) {
                         return [false, util.format("Select more than to %s choice", validatorValue - 1)];
                     }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
@@ -179,11 +179,11 @@ export async function validateAnswer(question, data) {
                         answer > moment(validatorValue).date(1).month(1).year(2019)) {
                         return [false, util.format("Time must greater than or equal to %s", String(answer))];
                     }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
-                        answer > validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
+                        answer > validatorValue*validations[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
                         return [false, util.format("Value must greater than %s", String(answer))]
                     }
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.MAX) {
-                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
+                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validations[VALIDATION_NAME_CHOICES.MULTIPLE] &&
                         answers.length < validatorValue) {
                         return [false, util.format("Select less than to %s choice", validatorValue - 1)];
                     }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length < validatorValue) {
@@ -198,13 +198,13 @@ export async function validateAnswer(question, data) {
                         answer < moment(validatorValue).date(1).month(1).year(2019)) {
                         return [false, util.format("Time must less than or equal to %s", String(answer))];
                     }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
-                        answer < validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
+                        answer < validatorValue*validations[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
                         return [false, util.format("Value must less than %s", String(answer))]
                     }
                 }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && answer.length > 1) {
                     return [false, "Select single choice"];
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE &&
-                    validators[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT &&
+                    validations[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT &&
                     !Number.isInteger(answer)) {
                     return [false, "Only integer value is allowed"];
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.OPTION_VALUE) {

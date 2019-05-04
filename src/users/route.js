@@ -71,7 +71,7 @@ router.delete('/program/:uid', (req, res, next) => {
     programController.delete(req, res, next);
 });
 router.get('/program/:uid/questions', (req, res, next) => {
-    programController.getQuestion(req, res, next);
+    programController.getQuestions(req, res, next);
 });
 router.get('/program/:uid/beneficiaries', (req, res, next) => {
     programController.getBenefeciaries(req, res, next);

@@ -1,6 +1,6 @@
 import {BaseRepository} from "../contrib/repository";
 import {Beneficiary, Form, FormQuestion, Program, User, Question, Validation, Answer} from "./model";
-import {getValidators} from "../utils/helpers";
+import {getValidations} from "../utils/helpers";
 import mongoose from "mongoose";
 
 
@@ -61,7 +61,7 @@ export class QuestionRepository extends BaseRepository {
     async updateResponse(questions) {
         return await Promise.all(questions.map(async (questionInstance) => {
             let question = await questionInstance.toObject();
-            question.validators = await getValidators(questionInstance.validatorNames);
+            question.validators = await getValidations(questionInstance.validatorNames);
             return await question;
         }));
     }

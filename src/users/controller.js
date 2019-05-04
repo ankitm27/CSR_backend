@@ -7,7 +7,7 @@ import {
     ProgramRepository, QuestionRepository,
     UserRepository
 } from "./repository";
-import {compareHash, makeHash, getValidationObjects, validateAnswer, get_Validators} from "../utils/helpers";
+import {compareHash, makeHash, getValidationObjects, validateAnswer, getValidators, isEmpty} from "../utils/helpers";
 import {Answer, Program, Question, User, Validation} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
@@ -180,13 +180,13 @@ export class ProgramController extends BaseController {
         return data;
     }
 
-    async getQuestion(req, res, next) {
+    async getQuestions(req, res, next) {
         let program = await this.repository.get_object_or_404(res, req.params.uid);
         let programQuestions = await program.questions.toObject();
         let questionRespository = new QuestionRepository();
         let response = await programQuestions.map(async (programQuestion) => {
             let question = await questionRespository.get_object_or_404(res, programQuestion.question);
-            programQuestion.validations = await get_Validators(question, programQuestion.validations);
+            programQuestion.validators = await getValidators(question, programQuestion.validations);
             programQuestion.questionType = await question.questionType;
             programQuestion.isActive = await question.isActive;
             return await programQuestion;
@@ -290,40 +290,40 @@ export class ProgramQuestionController {
     }
 
     async addAnswer(req, res, next) {
-        let data = req.body;
-        let questionRepository = new QuestionRepository();
-        let errors = [];
-        data.forEach(async(datum) => {
-            let [success, error] = [false, null];
-            let question = await questionRepository.get_object_or_404(res, datum.question);
-            // console.log(await Answer.find({
-            //     programQuestion: data.programQuestion,
-            //     program: data.program,
-            //     beneficiary: data.beneficiary
-            // }).countDocuments());
-            if (await Answer.find({
-                programQuestion: data.programQuestion,
-                program: data.program,
-                beneficiary: data.beneficiary
-            }).countDocuments() > 0) {
-                [success, error] = [false, "Answer already exist"];
-            }else {
-                [success, error] = await validateAnswer(question, datum);
+        try {
+            let data = req.body;
+            let questionRepository = new QuestionRepository();
+            let errors = {};
+
+            for(let datum of data) {
+                let [success, error] = [false, null];
+                let question = await questionRepository.get_object_or_404(res, datum.question);
+                if (await Answer.find({
+                    programQuestion: datum.programQuestion,
+                    program: datum.program,
+                    beneficiary: datum.beneficiary
+                }).countDocuments() > 0) {
+                    [success, error] = [false, "Answer already exist"];
+                }else {
+                    [success, error] = await validateAnswer(question, datum);
+                }
+                if (!success) {
+                    errors[datum.programQuestion] = {
+                        "question": datum.question,
+                        "program": datum.program,
+                        "error": error
+                    }
+                }
             }
-            if (!success) {
-                errors.push({
-                    "question": datum.question,
-                    "program": datum.program,
-                    "error": error
-                })
+            if (isEmpty(errors)) {
+                let formQuestionRepository = new FormQuestionRepository();
+                let answer = await formQuestionRepository.createAnswer(data);
+                sendResponse(res, responseCodes.HTTP_200_OK, null, answer);
+            }else{
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
             }
-        });
-        if (errors.length == 0) {
-            let formQuestionRepository = new FormQuestionRepository();
-            let answer = await formQuestionRepository.createAnswer(data);
-            sendResponse(res, responseCodes.HTTP_200_OK, null, answer);
-        }else{
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 }
