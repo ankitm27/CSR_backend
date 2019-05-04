@@ -34,6 +34,10 @@ export class ProgramRepository extends BaseRepository {
     constructor() {
         super(Program);
     }
+
+    async getBenefeciaries(program_id) {
+        return await Answer.find({program: program_id}).distinct('beneficiary').countDocuments();
+    }
 }
 
 

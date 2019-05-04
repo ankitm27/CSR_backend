@@ -29,6 +29,9 @@ export class BaseController {
         return req.body;
     }
 
+    getDetailResponse(instance) {
+        return instance;
+    }
 
     async getList(req, res, next) {
         let query = await this.getListQuery(req);
@@ -41,7 +44,7 @@ export class BaseController {
         let query = await this.getDetailQuery(req);
         let response = await this.repository.get_object_or_404(res, uid);
         if (response) {
-            sendResponse(res, responseCodes.HTTP_200_OK, null, response);
+            sendResponse(res, responseCodes.HTTP_200_OK, null, await this.getDetailResponse(response));
         }
     }
 

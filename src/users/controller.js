@@ -184,7 +184,7 @@ export class ProgramController extends BaseController {
         let program = await this.repository.get_object_or_404(res, req.params.uid);
         let programQuestions = await program.questions.toObject();
         let questionRespository = new QuestionRepository();
-        let response = await programQuestions.map(async(programQuestion) => {
+        let response = await programQuestions.map(async (programQuestion) => {
             let question = await questionRespository.get_object_or_404(res, programQuestion.question);
             programQuestion.validations = await get_Validators(question, programQuestion.validations);
             programQuestion.questionType = await question.questionType;
@@ -197,15 +197,39 @@ export class ProgramController extends BaseController {
     async getBenefeciaries(req, res, next) {
         try {
             let data = await {
-                "totalBenefeciaries": await Answer.find({program: req.params.uid}).distinct('beneficiary').countDocuments()
+                "totalBenefeciaries": this.repository.getBenefeciaries(req.params.uid)
             };
             sendResponse(res, responseCodes.HTTP_200_OK, null, data);
-        }catch (e) {
+        } catch (e) {
             sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
         }
     }
-}
 
+    async getDetailResponse(instance) {
+        try {
+            instance = instance.toObject();
+            let totalBenefeciaries = await this.repository.getBenefeciaries(instance._id);
+            instance.fundingPerBeneficiary = totalBenefeciaries > 0 ? instance.funding / totalBenefeciaries : 0;
+            instance.totalAreaCovered = Math.floor(Math.random() * 1000) + 0;
+            instance.supervisor = {
+                managerName: "John Smith",
+                email: "smith.john8293@gmail.com",
+                location: "Delhi",
+                mobile: "9281838271"
+            };
+            instance.ngo = {
+                ngoName: "Social Welfare",
+                managerName: "Anurag Kumar",
+                email: "anurag.kumar38@gmail.com",
+                location: "Delhi",
+                mobile: "7816219162"
+            };
+            return await instance;
+        } catch (e) {
+            console.log(e);
+        }
+    }
+}
 
 export class FormController extends BaseController {
     constructor() {
@@ -270,8 +294,22 @@ export class ProgramQuestionController {
         let questionRepository = new QuestionRepository();
         let errors = [];
         data.forEach(async(datum) => {
+            let [success, error] = [false, null];
             let question = await questionRepository.get_object_or_404(res, datum.question);
-            let [success, error] = await validateAnswer(question, datum);
+            // console.log(await Answer.find({
+            //     programQuestion: data.programQuestion,
+            //     program: data.program,
+            //     beneficiary: data.beneficiary
+            // }).countDocuments());
+            if (await Answer.find({
+                programQuestion: data.programQuestion,
+                program: data.program,
+                beneficiary: data.beneficiary
+            }).countDocuments() > 0) {
+                [success, error] = [false, "Answer already exist"];
+            }else {
+                [success, error] = await validateAnswer(question, datum);
+            }
             if (!success) {
                 errors.push({
                     "question": datum.question,
@@ -283,9 +321,9 @@ export class ProgramQuestionController {
         if (errors.length == 0) {
             let formQuestionRepository = new FormQuestionRepository();
             let answer = await formQuestionRepository.createAnswer(data);
-            sendResponse(res, responseCodes.HTTP_200_OK, null, answer)
+            sendResponse(res, responseCodes.HTTP_200_OK, null, answer);
         }else{
-            sendResponse(res, responseCodes.HTTP_200_OK, errors)
+            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
         }
     }
 }
