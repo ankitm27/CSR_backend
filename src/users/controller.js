@@ -306,6 +306,7 @@ export class ProgramQuestionController {
                     [success, error] = [false, "Answer already exist"];
                 }else {
                     [success, error] = await validateAnswer(question, datum);
+                    console.log(success, error);
                 }
                 if (!success) {
                     errors[datum.programQuestion] = {

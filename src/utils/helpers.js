@@ -45,6 +45,15 @@ export function isEmpty(obj) {
     return true;
 }
 
+export function isSuperset(set, subset) {
+    for (let element of subset) {
+        if (!set.has(element)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function getValidations(validatorNames) {
     return validatorNames.map((validatorName) => {
         let data = {};
@@ -157,11 +166,11 @@ export async function validateAnswer(question, data) {
         }else if(questionType == QUESTION_TYPE_CHOICES.RATING && (answer < 0 || answer > 5)) {
             return [false, "Invalid ratings"];
         }
-
-        if (answer == undefined || answer == null) {
+        
+        if (answer == undefined || answer == null || answer == []) {
             return [false, "Answer is required"];
         }else {
-            Object.keys(validations).forEach((validatorKey) => {
+            for (let validatorKey of Object.keys(validations)) {
                 let validatorValue = validations[validatorKey];
                 if(validatorKey == VALIDATION_NAME_CHOICES.MIN) {
                     if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validations[VALIDATION_NAME_CHOICES.MULTIPLE] &&
@@ -210,8 +219,11 @@ export async function validateAnswer(question, data) {
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.OPTION_VALUE) {
                     const requiredValues = new Set(Object.values(validatorValue));
                     const givenValues = new Set(answer);
+                    if (isSuperset(requiredValues, givenValues)){
+                        return [false, "Invalid value for choice"];
+                    }
                 }
-            });
+            }
         }
         return [true, null]
     }catch (e) {
