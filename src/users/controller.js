@@ -130,9 +130,9 @@ export class UserController extends BaseController{
                     {
                         $group: {
                             _id: null,
-                            goodAvg: {$avg: "$good"},
-                            badAvg: {$avg: "$bad"},
-                            averageAvg: {$avg: "$average"},
+                            overallGood: {$avg: "$good"},
+                            overallBad: {$avg: "$bad"},
+                            overallAverage: {$avg: "$average"},
                             goalAchievedAvg: {$avg: "$goalAchieved"},
                             totalFunding: {$sum: "$funding"}
                         }
@@ -140,12 +140,21 @@ export class UserController extends BaseController{
                 ]
             ))[0];
             let totalProgram = await Program.find({user: req.user._id}).countDocuments();
+            let overallStatus = null;
+            if(aggregateData.overallGood >= 70) {
+                overallStatus = "good";
+            }else if(aggregateData.overallGood >= 50) {
+                overallStatus = "average";
+            }else {
+                overallStatus = "bad";
+            }
             let data = {
                 "totalProgram": totalProgram,
                 "totalFunding": aggregateData.totalFunding,
-                "goodAvg": aggregateData.goodAvg,
-                "badAvg": aggregateData.badAvg,
-                "averageAvg": aggregateData.averageAvg,
+                "overallGood": aggregateData.overallGood,
+                "overallBad": aggregateData.overallBad,
+                "overallAverage": aggregateData.overallAverage,
+                "overallStatus": overallStatus,
                 "goalAchievedAvg": aggregateData.goalAchievedAvg,
                 "programs": await Program.find({user: req.user._id}, {questions: 0})
             };
