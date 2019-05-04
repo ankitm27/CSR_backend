@@ -70,6 +70,9 @@ router.patch('/program/:uid', (req, res, next) => {
 router.delete('/program/:uid', (req, res, next) => {
     programController.delete(req, res, next);
 });
+router.post('/program/:uid/question/', (req, res, next) => {
+    programController.addQuestion(req, res, next);
+});
 router.get('/program/:uid/questions', (req, res, next) => {
     programController.getQuestions(req, res, next);
 });
@@ -118,9 +121,6 @@ router.get('/question/', (req, res, next) => {
     questionController.getList(req, res, next);
 });
 
-router.post('/program-question/', (req, res, next) => {
-    programQuestionController.addQuestion(req, res, next);
-});
 router.post('/answers/', (req, res, next) => {
     programQuestionController.addAnswer(req, res, next);
 });

@@ -38,6 +38,26 @@ export class ProgramRepository extends BaseRepository {
     async getBenefeciaries(program_id) {
         return await Answer.find({program: program_id}).distinct('beneficiary').countDocuments();
     }
+
+    async createProgramQuestion(data, validations) {
+        console.log(data, validations);
+        try {
+            let validationIds = [];
+            let validationsData = await Validation.collection.insertMany(validations);
+            let programQuestion = await {
+                question: data.question,
+                title: data.title,
+                mandatory: true,
+                description: data.description != undefined ? data.description : null,
+                keyword: data.keyword != undefined ? data.keyword : null,
+                validations: await Object.values(validationsData.insertedIds),
+            };
+            let program = await Program.updateOne({_id: data.program}, {$push: {questions: programQuestion}});
+            return await program;
+        }catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 
@@ -69,25 +89,6 @@ export class QuestionRepository extends BaseRepository {
 
 export class FormQuestionRepository{
     constructor() {
-    }
-
-    async createFormQuestion(data, validations) {
-        try {
-            let validationIds = [];
-            let validationsData = await Validation.collection.insertMany(validations);
-            let programQuestion = await {
-                question: data.question,
-                title: data.title,
-                mandatory: true,
-                description: data.description != undefined ? data.description : null,
-                keyword: data.keyword != undefined ? data.keyword : null,
-                validations: await Object.values(validationsData.insertedIds),
-            };
-            let program = await Program.updateOne({_id: data.program}, {$push: {questions: programQuestion}});
-            return await program;
-        }catch (e) {
-            console.log(e);
-        }
     }
 
     async createAnswer(data) {

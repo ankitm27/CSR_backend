@@ -166,7 +166,7 @@ export async function validateAnswer(question, data) {
         }else if(questionType == QUESTION_TYPE_CHOICES.RATING && (answer < 0 || answer > 5)) {
             return [false, "Invalid ratings"];
         }
-        
+
         if (answer == undefined || answer == null || answer == []) {
             return [false, "Answer is required"];
         }else {

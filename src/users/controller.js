@@ -229,6 +229,29 @@ export class ProgramController extends BaseController {
             console.log(e);
         }
     }
+
+    async addQuestion(req, res, next) {
+        try {
+            let data = req.body;
+            let program = await this.repository.get_object_or_404(res, req.params.uid);
+            data.program = program._id;
+            let questionRespository = new QuestionRepository();
+            let question = await questionRespository.get_object_or_404(res, data.question);
+            let [errors, validations] = await getValidationObjects(data.program, question, data);
+            if (errors.length != 0) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
+            }else {
+                let programQuestion = await this.repository.createProgramQuestion(data, validations);
+                if(programQuestion.n == 1) {
+                    sendResponse(res, responseCodes.HTTP_200_OK, null, {"created": true});
+                }else {
+                    sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Error while creation");
+                }
+            }
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+        }
+    }
 }
 
 export class FormController extends BaseController {
@@ -269,24 +292,6 @@ export class QuestionController extends BaseController {
 
 export class ProgramQuestionController {
     constructor() {
-    }
-
-    async addQuestion(req, res, next) {
-        let data = req.body;
-        let questionRespository = new QuestionRepository();
-        let question = await questionRespository.get_object_or_404(res, data.question);
-        let [errors, validations] = await getValidationObjects(data.program, question, data);
-        if (errors.length != 0) {
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
-        }else {
-            let formQuestionRepository = new FormQuestionRepository();
-            let formQuestion = await formQuestionRepository.createFormQuestion(data, validations);
-            if(formQuestion.n == 1) {
-                sendResponse(res, responseCodes.HTTP_200_OK, null, {"created": true});
-            }else {
-                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Error while creation");
-            }
-        }
     }
 
     async addAnswer(req, res, next) {
