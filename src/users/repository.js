@@ -40,7 +40,6 @@ export class ProgramRepository extends BaseRepository {
     }
 
     async createProgramQuestion(data, validations) {
-        console.log(data, validations);
         try {
             let validationIds = [];
             let validationsData = await Validation.collection.insertMany(validations);

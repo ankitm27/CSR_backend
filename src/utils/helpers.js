@@ -62,16 +62,17 @@ export function getValidations(validatorNames) {
     });
 }
 
-function questionValidation(program_id, question, data, validatorName) {
+export function questionValidation(program_id, question, data, validatorName) {
     let validator = VALIDATOR_INFO[validatorName];
-    let validatorName_in_data = data[validatorName] == undefined ? validator.default : data[validatorName];
+    let validatorValue_in_data = data[validatorName] == undefined ? validator.default : data[validatorName];
+    let error = null;
     // If validatorName is not present in data or set default as null in validators
-    if (validatorName_in_data == null) {
-        return util.format("%s is required", validatorName);
+    if (validatorValue_in_data == null) {
+        error = util.format("%s is required", validatorName);
     }
     // If validator type is number and validatorName value is less than min value present on validator
-    else if(validator.type == VALIDATOR_TYPE_CHOICES.NUMBER && data[validatorName] < validator.min) {
-        return util.format("%s must greater than %s", validatorName, validator.min);
+    else if(validator.type == VALIDATOR_TYPE_CHOICES.NUMBER && validatorValue_in_data < validator.min) {
+        error = util.format("%s must greater than %s", validatorName, validator.min);
     }
     // If min and max type of validations
     else if ([VALIDATION_NAME_CHOICES.MIN, VALIDATION_NAME_CHOICES.MAX].includes(validatorName)){
@@ -81,13 +82,13 @@ function questionValidation(program_id, question, data, validatorName) {
             currentValueLength = Object.keys(
                 (data[VALIDATION_NAME_CHOICES.optionValue]) instanceof Array || typeof(data[VALIDATION_NAME_CHOICES.optionValue]) != VALIDATOR_TYPE_CHOICES.OBJECT ? [] : data[VALIDATION_NAME_CHOICES.optionValue]
             ).length;
-            if(currentValueLength != null && data[validatorName] > currentValueLength) {
-                return util.format("%s must less than %s", validatorName, currentValueLength);
+            if(currentValueLength != null && validatorValue_in_data > currentValueLength) {
+                error = util.format("%s must less than %s", validatorName, currentValueLength);
             }
         }
         // Not selected float value when numberFieldType is integer
-        else if(data[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] != NUMBER_FIELD_TYPE_CHOICES.DECIMAL && !Number.isInteger(data[validatorName])) {
-            return util.format("Invalid value %s must less than %s", data[validatorName], validatorName);
+        else if(data[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT && !Number.isInteger(validatorValue_in_data)) {
+            error = util.format("Invalid value %s for %s, integer required", validatorValue_in_data, validatorName);
         }
     }
     // Validation for maximum step size
@@ -95,19 +96,20 @@ function questionValidation(program_id, question, data, validatorName) {
         let maxStepSize = data[VALIDATION_NAME_CHOICES.MAX] || VALIDATOR_INFO[VALIDATION_NAME_CHOICES.MAX].min -
             data[VALIDATION_NAME_CHOICES.MIN] || VALIDATOR_INFO[VALIDATION_NAME_CHOICES.MIN].min;
         if (data[VALIDATION_NAME_CHOICES.STEP_SIZE] > maxStepSize) {
-            return util.format("Max %s allowed is not more than %s", validatorName, maxStepSize);
+            error = util.format("Max %s allowed is not more than %s", validatorName, maxStepSize);
         }
     }
-    else {
+    if (error == null){
         let response = {
             name: validatorName,
             isValid: IS_VALIDATE_LIST.includes(validatorName),
             question: question._id,
             program: program_id
         };
-        response[validatorName] = validatorName_in_data;
-        // console.log(await response);
+        response[validatorName] = validatorValue_in_data;
         return response;
+    }else {
+        return error;
     }
 }
 
@@ -115,14 +117,14 @@ export async function getValidationObjects(program_id, question, data) {
     let validatorNames = question.validatorNames;
     let errors = [];
     let validations = [];
-    validatorNames.forEach(function(validatorName){
+    for(let validatorName of validatorNames) {
         let response = questionValidation(program_id, question, data, validatorName);
         if (typeof(response) == "string") {
             errors.push(response);
         }else {
             validations.push(response);
         }
-    });
+    }
     return [errors, validations];
 }
 
