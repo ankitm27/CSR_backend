@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
 import {dsn} from "../settings/config";
 import {
-    IS_VALIDATE_LIST, NUMBER_FIELD_TYPE_CHOICES,
+    IS_VALIDATE_LIST,
     QUESTION_TYPE_CHOICES, Validation,
     VALIDATION_NAME_CHOICES,
     VALIDATOR_INFO,
@@ -86,8 +86,8 @@ export function questionValidation(program_id, question, data, validatorName) {
                 error = util.format("%s must less than %s", validatorName, currentValueLength);
             }
         }
-        // Not selected float value when numberFieldType is integer
-        else if(data[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT && !Number.isInteger(validatorValue_in_data)) {
+        // Not selected float value when allowDecimal is integer
+        else if(!data[VALIDATION_NAME_CHOICES.ALLOW_DECIMAL] && !Number.isInteger(validatorValue_in_data)) {
             error = util.format("Invalid value %s for %s, integer required", validatorValue_in_data, validatorName);
         }
     }
@@ -214,9 +214,8 @@ export async function validateAnswer(question, data) {
                     }
                 }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && answer.length > 1) {
                     return [false, "Select single choice"];
-                }else if(validatorKey == VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE &&
-                    validations[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] == NUMBER_FIELD_TYPE_CHOICES.INT &&
-                    !Number.isInteger(answer)) {
+                }else if(validatorKey == VALIDATION_NAME_CHOICES.ALLOW_DECIMAL &&
+                    !validations[VALIDATION_NAME_CHOICES.ALLOW_DECIMAL] && !Number.isInteger(answer)) {
                     return [false, "Only integer value is allowed"];
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.OPTION_VALUE) {
                     const requiredValues = new Set(Object.values(validatorValue));

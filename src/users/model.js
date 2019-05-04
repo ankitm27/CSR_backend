@@ -315,8 +315,8 @@ let VALIDATION_NAME_CHOICES = Object.freeze({
     MAX: "max",
     RANDOM_OPTION: "randomOption",
     OPTION_VALUE: "optionValue",
-    NUMBER_FIELD_TYPE: "numberFieldType",
-    LOCATION_FIELD_TYPE: "locationFieldType",
+    ALLOW_DECIMAL: "allowDecimal",
+    ALLOW_MARKED_LOCATION: "allowMarkedLocation",
     LOCATION_ACCURACY: "locationAccuracy",
     DATE_FORMAT: "dateFormat",
     TIME_FORMAT: "timeFormat",
@@ -333,7 +333,7 @@ let VALIDATION_NAME_CHOICES = Object.freeze({
 let isValidateList = [
     VALIDATION_NAME_CHOICES.MIN,
     VALIDATION_NAME_CHOICES.MAX,
-    VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE,
+    VALIDATION_NAME_CHOICES.ALLOW_DECIMAL,
     VALIDATION_NAME_CHOICES.DATE_FORMAT,
     VALIDATION_NAME_CHOICES.TIME_FORMAT,
     VALIDATION_NAME_CHOICES.STEP_SIZE,
@@ -427,15 +427,6 @@ let FormQuestionSchema = new mongoose.Schema({
 FormQuestionSchema.plugin(mongoose_timestamp);
 
 let FormQuestion = mongoose.model('FormQuestion', FormQuestionSchema);
-
-let NUMBER_FIELD_TYPE_CHOICES = Object.freeze({
-    INT: "int",
-    DECIMAL: "decimal",
-});
-let LOCATION_FIELD_TYPE_CHOICES = Object.freeze({
-    CURRENT: "current",
-    MARKED: "marked",
-});
 
 let ACCURACY_CHOICES = Object.freeze({
     HIGH: "high",
@@ -531,16 +522,14 @@ let ValidationSchema = new mongoose.Schema({
         type: Boolean,
         strict: false
     },
-    numberFieldType: {
-        type: String,
-        enum: Object.values(NUMBER_FIELD_TYPE_CHOICES),
-        default: NUMBER_FIELD_TYPE_CHOICES.DECIMAL,
+    allowDecimal: {
+        type: Boolean,
+        default: true,
         strict: false
     },
-    locationFieldType: {
-        type: String,
-        enum: Object.values(LOCATION_FIELD_TYPE_CHOICES),
-        default: LOCATION_FIELD_TYPE_CHOICES.CURRENT,
+    allowMarkedLocation: {
+        type: Boolean,
+        default: true,
         strict: false
     },
     locationAccuracy: {
@@ -635,15 +624,13 @@ validatorsInfo[VALIDATION_NAME_CHOICES.MULTIPLE] = {
     type: VALIDATOR_TYPE_CHOICES.BOOLEAN,
     default: false,
 };
-validatorsInfo[VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE] = {
-    type: VALIDATOR_TYPE_CHOICES.CHOICE,
-    choices: NUMBER_FIELD_TYPE_CHOICES,
-    default: NUMBER_FIELD_TYPE_CHOICES.INT
+validatorsInfo[VALIDATION_NAME_CHOICES.ALLOW_DECIMAL] = {
+    type: VALIDATOR_TYPE_CHOICES.BOOLEAN,
+    default: true
 };
-validatorsInfo[VALIDATION_NAME_CHOICES.LOCATION_FIELD_TYPE] = {
-    type: VALIDATOR_TYPE_CHOICES.CHOICE,
-    choices: LOCATION_FIELD_TYPE_CHOICES,
-    default: LOCATION_FIELD_TYPE_CHOICES.CURRENT
+validatorsInfo[VALIDATION_NAME_CHOICES.ALLOW_MARKED_LOCATION] = {
+    type: VALIDATOR_TYPE_CHOICES.BOOLEAN,
+    default: true
 };
 validatorsInfo[VALIDATION_NAME_CHOICES.LOCATION_ACCURACY] = {
     type: VALIDATOR_TYPE_CHOICES.CHOICE,
@@ -708,10 +695,8 @@ export {
     DATE_FORMAT_CHOICES,
     TIME_FORMAT_CHOICES,
     ACCURACY_CHOICES,
-    LOCATION_FIELD_TYPE_CHOICES,
     EXTENSION_CHOICES,
     VALIDATOR_TYPE_CHOICES,
-    NUMBER_FIELD_TYPE_CHOICES,
     VALIDATOR_INFO,
     IS_VALIDATE_LIST,
     STATUS_CHOICES

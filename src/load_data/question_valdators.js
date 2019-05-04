@@ -27,7 +27,7 @@ let questions = [
         validatorNames: [
             VALIDATION_NAME_CHOICES.MIN,
             VALIDATION_NAME_CHOICES.MAX,
-            VALIDATION_NAME_CHOICES.NUMBER_FIELD_TYPE,
+            VALIDATION_NAME_CHOICES.ALLOW_DECIMAL,
         ]
     },{
         name: "Location",
@@ -35,7 +35,7 @@ let questions = [
         isActive: true,
         validatorNames: [
             VALIDATION_NAME_CHOICES.LOCATION_ACCURACY,
-            VALIDATION_NAME_CHOICES.LOCATION_FIELD_TYPE,
+            VALIDATION_NAME_CHOICES.ALLOW_MARKED_LOCATION,
         ]
     },{
         name: "Date",
