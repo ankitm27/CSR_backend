@@ -25,7 +25,6 @@ let BeneficiarySchema = new mongoose.Schema({
     },
     name: {
         type: String,
-        required: [true, 'Name is required'],
         minlength: [3, "Atleast 3 characters are required"],
         maxlength: [100, "Atmost 50 characters are allowed"]
     },

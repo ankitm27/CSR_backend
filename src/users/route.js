@@ -121,8 +121,8 @@ router.get('/question/', (req, res, next) => {
     questionController.getList(req, res, next);
 });
 
-router.post('/answers/', (req, res, next) => {
-    programQuestionController.addAnswer(req, res, next);
+router.post('/submit-answers/', (req, res, next) => {
+    programQuestionController.submitAnswer(req, res, next);
 });
 // Classes are used just like ES5 constructor functions:
 

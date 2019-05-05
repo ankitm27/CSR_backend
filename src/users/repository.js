@@ -70,6 +70,15 @@ export class BeneficiaryRepository extends BaseRepository {
     constructor() {
         super(Beneficiary);
     }
+
+    async generateUniqueNumber() {
+        let aadhaarNumber = Math.floor(Math.random() * 9999999999) + 100000000000;
+        if (await Beneficiary.find({aadhaarNumber: aadhaarNumber}).countDocuments() > 0) {
+            return this.generateUniqueNumber();
+        }else {
+            return aadhaarNumber;
+        }
+    }
 }
 
 export class QuestionRepository extends BaseRepository {
@@ -92,7 +101,12 @@ export class FormQuestionRepository{
 
     async createAnswer(data) {
         try {
+            let beneficiaryRespository = new BeneficiaryRepository();
+            let beneficiary = await beneficiaryRespository.create({
+                aadhaarNumber: await beneficiaryRespository.generateUniqueNumber()
+            });
             let response = await data.map(async(datum) => {
+                datum.beneficiary = beneficiary._id;
                 return await Answer.create(datum);
             });
             return await Promise.all(response);

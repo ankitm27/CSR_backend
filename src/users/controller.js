@@ -294,7 +294,7 @@ export class ProgramQuestionController {
     constructor() {
     }
 
-    async addAnswer(req, res, next) {
+    async submitAnswer(req, res, next) {
         try {
             let data = req.body;
             let questionRepository = new QuestionRepository();
@@ -303,16 +303,7 @@ export class ProgramQuestionController {
             for(let datum of data) {
                 let [success, error] = [false, null];
                 let question = await questionRepository.get_object_or_404(res, datum.question);
-                if (await Answer.find({
-                    programQuestion: datum.programQuestion,
-                    program: datum.program,
-                    beneficiary: datum.beneficiary
-                }).countDocuments() > 0) {
-                    [success, error] = [false, "Answer already exist"];
-                }else {
-                    [success, error] = await validateAnswer(question, datum);
-                    console.log(success, error);
-                }
+                [success, error] = await validateAnswer(question, datum);
                 if (!success) {
                     errors[datum.programQuestion] = {
                         "question": datum.question,
