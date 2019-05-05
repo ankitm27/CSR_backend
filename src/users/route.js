@@ -1,11 +1,11 @@
 import express from 'express';
-
+import multer from 'multer';
 import {
     BeneficiaryController,
     FormController,
     ProgramQuestionController,
     ProgramController, QuestionController,
-    UserController
+    UserController, ImageController
 } from "./controller";
 
 import {TokenAuthenticationMiddleware} from "../contrib/middleware";
@@ -14,6 +14,7 @@ import {loadQuestions} from "../load_data/question_valdators";
 let router = express.Router();
 
 let tokenMiddleWare = new TokenAuthenticationMiddleware();
+let imageController = new ImageController();
 let userController = new UserController();
 let programController = new ProgramController();
 let formController = new FormController();
@@ -21,9 +22,15 @@ let beneficiaryController = new BeneficiaryController();
 let programQuestionController = new ProgramQuestionController();
 let questionController = new QuestionController();
 
+let upload = multer({dest: 'media/'});
+let cpUpload = upload.fields([{ name: 'image', maxCount: 1 }]);
+
 /* GET users listing. */
 router.post('/load-questions', (req, res, next) => {
     loadQuestions(req, res, next);
+});
+router.post('/upload-image', cpUpload, (req, res, next) => {
+    imageController.uploadImage(req, res, next);
 });
 
 router.post('/:role/register', (req, res, next) => {

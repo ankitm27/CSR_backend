@@ -29,7 +29,7 @@ export class UserController extends BaseController{
                 if (compareHash(data.password, user.password) == false) {
                     sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
                 } else {
-                    let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: '24h'});
+                    let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: 60*60*24*365});
                     sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token});
                 }
             }
@@ -48,7 +48,7 @@ export class UserController extends BaseController{
             if (compareHash(data.password, user.password) == false) {
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
             } else {
-                let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: '24h'});
+                let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: 60*60*24*365});
                 sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token,  resetPassword: user.allowLoggedIn});
             }
         }
@@ -322,5 +322,13 @@ export class ProgramQuestionController {
         }catch (e) {
             sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
+    }
+}
+
+
+export class ImageController {
+    uploadImage(req, res, next) {
+        console.log(req.files);
+        sendResponse(res, responseCodes.HTTP_200_OK, null, {});
     }
 }
