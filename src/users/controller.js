@@ -314,7 +314,7 @@ export class ProgramQuestionController {
             }
             if (isEmpty(errors)) {
                 let formQuestionRepository = new FormQuestionRepository();
-                let answer = await formQuestionRepository.createAnswer(data);
+                let answer = await formQuestionRepository.createAnswer(data, req.user);
                 sendResponse(res, responseCodes.HTTP_200_OK, null, answer);
             }else{
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
