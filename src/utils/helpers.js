@@ -139,13 +139,27 @@ export async function getValidators(question, validators) {
 
 export async function validateAnswer(question, data) {
     try {
-        let validations = await getValidators(question, data.validations);
+        let validators = await getValidators(question, data.validations);
         let questionType = question.questionType;
         let answer = data.answer;
         let date = Date.now();
         let error = null;
-        if (questionType == QUESTION_TYPE_CHOICES.CHOICE) {
+        if ([QUESTION_TYPE_CHOICES.CHOICE, QUESTION_TYPE_CHOICES.LOCATION].includes(questionType)) {
             answer = answer.split('#');
+            if(questionType == QUESTION_TYPE_CHOICES.LOCATION) {
+                if(answer.length != 2) {
+                    error = "Invalid location provided"
+                }else {
+                    let [lat, long] = answer;
+                    if ((isNaN(lat) || lat > 90 || lat < -90) && (isNaN(long) || long > 90 || long < -90)) {
+                        error = "Invalid latitude and longitude values";
+                    }else if (isNaN(lat) || lat > 90 || lat < -90) {
+                        error = "Invalid latitude value";
+                    }else if(isNaN(long) || long > 90 || long < -90) {
+                        error = "Invalid longitude value";
+                    }
+                }
+            }
         }else if ([QUESTION_TYPE_CHOICES.NUMBER, QUESTION_TYPE_CHOICES.SCALE,
             QUESTION_TYPE_CHOICES.RATING].includes(questionType)) {
             if (isNaN(answer)) {
@@ -153,15 +167,15 @@ export async function validateAnswer(question, data) {
             }
             answer = Number(answer);
         }else if (questionType == QUESTION_TYPE_CHOICES.DATE) {
-            if(!moment(answer, validations[VALIDATION_NAME_CHOICES.DATE_FORMAT]).isValid()) {
+            if(!moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT]).isValid()) {
                 error = "Invalid date format";
             }
-            answer = moment(answer, validations[VALIDATION_NAME_CHOICES.DATE_FORMAT])
+            answer = moment(answer, validators[VALIDATION_NAME_CHOICES.DATE_FORMAT])
         }else if (questionType == QUESTION_TYPE_CHOICES.TIME) {
-            if(!moment("DD/MM/YYYY" + answer, "DD/MM/YYYY", validations[VALIDATION_NAME_CHOICES.TIME_FORMAT]).isValid()) {
+            if(!moment("DD/MM/YYYY" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT]).isValid()) {
                 error = "Invalid date format";
             }
-            answer = moment("01/01/2019" + answer, "DD/MM/YYYY", validations[VALIDATION_NAME_CHOICES.TIME_FORMAT])
+            answer = moment("01/01/2019" + answer, "DD/MM/YYYY", validators[VALIDATION_NAME_CHOICES.TIME_FORMAT])
         }else if(questionType == QUESTION_TYPE_CHOICES.PHONE && !mobileRegex.test(answer)) {
             error = "Invalid phone number";
         }else if(questionType == QUESTION_TYPE_CHOICES.EMAIL && !emailRegex.test(answer)) {
@@ -173,55 +187,59 @@ export async function validateAnswer(question, data) {
         if (error == null && (answer == undefined || answer == null || answer == [])) {
             error = "Answer is required";
         }else if(error == null) {
-            for (let validatorKey of Object.keys(validations)) {
-                let validatorValue = validations[validatorKey];
+            for (let validatorKey of Object.keys(validators)) {
+                let validatorValue = validators[validatorKey];
                 if(validatorKey == VALIDATION_NAME_CHOICES.MIN) {
-                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validations[VALIDATION_NAME_CHOICES.MULTIPLE] &&
+                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
                         answers.length > validatorValue) {
                         error =util.format("Select more than to %s choice", validatorValue - 1);
-                    }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
+                    }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length < validatorValue) {
                         error = util.format("String length must more than %s characters", validatorValue - 1);
-                    }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer > validatorValue) {
+                    }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer < validatorValue) {
                         error = util.format("Number must greater than %s", validatorValue - 1);
-                    }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 && answer > validatorValue) {
-                        error = util.format("Date must greater than or equal to %s", String(answer));
-                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 && answer > validatorValue) {
+                    }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 &&
+                        answer < validatorValue) {
                         error = util.format("Date must greater than or equal to %s", String(answer));
                     }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
-                        answer > moment(validatorValue).date(1).month(1).year(2019)) {
+                        answer < validatorValue) {
+                        error = util.format("Date must greater than or equal to %s", String(answer));
+                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
+                        answer < moment(validatorValue).date(1).month(1).year(2019)) {
                         error = util.format("Time must greater than or equal to %s", String(answer));
                     }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
-                        answer > validatorValue*validations[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
+                        answer < validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
                         error = util.format("Value must greater than %s", String(answer));
                     }
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.MAX) {
-                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validations[VALIDATION_NAME_CHOICES.MULTIPLE] &&
-                        answers.length < validatorValue) {
+                    if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
+                        answers.length > validatorValue) {
                         error = util.format("Select less than to %s choice", validatorValue - 1);
-                    }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length < validatorValue) {
+                    }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
                         error = util.format("String length must less than %s characters", validatorValue - 1);
-                    }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer < validatorValue) {
+                    }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer > validatorValue) {
                         error = util.format("Number must less than %s", validatorValue - 1);
-                    }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 && answer < validatorValue) {
-                        error = util.format("Date must less than or equal to %s", String(answer));
-                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 && answer < validatorValue) {
+                    }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 &&
+                        answer > validatorValue) {
                         error = util.format("Date must less than or equal to %s", String(answer));
                     }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
-                        answer < moment(validatorValue).date(1).month(1).year(2019)) {
+                        answer > validatorValue) {
+                        error = util.format("Date must less than or equal to %s", String(answer));
+                    }else if (questionType == QUESTION_TYPE_CHOICES.TIME && validatorValue != 1 &&
+                        answer > moment(validatorValue).date(1).month(1).year(2019)) {
                         error = util.format("Time must less than or equal to %s", String(answer));
                     }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
-                        answer < validatorValue*validations[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
+                        answer > validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
                         error = util.format("Value must less than %s", String(answer));
                     }
-                }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && answer.length > 1) {
+                }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && !validatorValue && answer.length > 1) {
                     error = "Select single choice";
-                }else if(validatorKey == VALIDATION_NAME_CHOICES.ALLOW_DECIMAL &&
-                    !validations[VALIDATION_NAME_CHOICES.ALLOW_DECIMAL] && !Number.isInteger(answer)) {
+                }else if(validatorKey == VALIDATION_NAME_CHOICES.ALLOW_DECIMAL && !validatorValue &&
+                    !Number.isInteger(answer)) {
                     error = "Only integer value is allowed";
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.OPTION_VALUE) {
-                    const requiredValues = new Set(Object.values(validatorValue));
-                    const givenValues = new Set(answer);
-                    if (isSuperset(requiredValues, givenValues)){
+                    let requiredValues = new Set(Object.values(validatorValue));
+                    let givenValues = new Set(answer);
+                    if (!isSuperset(requiredValues, givenValues)){
                         error = "Invalid value for choice";
                     }
                 }
