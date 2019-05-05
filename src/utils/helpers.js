@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
+import multer from "multer";
 import {dsn} from "../settings/config";
 import {
     IS_VALIDATE_LIST,
@@ -257,5 +258,15 @@ export async function validateAnswer(question, data) {
     }catch (e) {
         console.log(e);
     }
-
 }
+
+// export default storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, '/media')
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, file.fieldname + '-' + Date.now())
+//     }
+// })
+//
+//

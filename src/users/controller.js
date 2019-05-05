@@ -141,26 +141,28 @@ export class UserController extends BaseController{
             ))[0];
             let totalProgram = await Program.find({user: req.user._id}).countDocuments();
             let overallStatus = null;
-            if(aggregateData.overallGood >= 70) {
-                overallStatus = "good";
-            }else if(aggregateData.overallGood >= 50) {
-                overallStatus = "average";
-            }else {
-                overallStatus = "bad";
+            if(aggregateData != undefined) {
+                if(aggregateData.overallGood >= 70) {
+                    overallStatus = "good";
+                }else if(aggregateData.overallGood >= 50) {
+                    overallStatus = "average";
+                }else {
+                    overallStatus = "bad";
+                }
             }
             let data = {
                 "totalProgram": totalProgram,
-                "totalFunding": aggregateData.totalFunding,
-                "overallGood": aggregateData.overallGood,
-                "overallBad": aggregateData.overallBad,
-                "overallAverage": aggregateData.overallAverage,
-                "overallStatus": overallStatus,
-                "goalAchievedAvg": aggregateData.goalAchievedAvg,
+                "totalFunding": aggregateData != undefined ? aggregateData.totalFunding : 0,
+                "overallGood": aggregateData != undefined ? aggregateData.overallGood : 0,
+                "overallBad": aggregateData != undefined ? aggregateData.overallBad : 0,
+                "overallAverage": aggregateData != undefined ? aggregateData.overallAverage : 0,
+                "overallStatus": overallStatus || 0,
+                "goalAchievedAvg": aggregateData != undefined ? aggregateData.goalAchievedAvg : 0,
                 "programs": await Program.find({user: req.user._id}, {questions: 0})
             };
             sendResponse(res, responseCodes.HTTP_200_OK, null, data);
         }catch (e) {
-            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 }
@@ -208,22 +210,8 @@ export class ProgramController extends BaseController {
     async getDetailResponse(instance) {
         try {
             instance = instance.toObject();
-            let totalBenefeciaries = await this.repository.getBenefeciaries(instance._id);
-            instance.fundingPerBeneficiary = totalBenefeciaries > 0 ? instance.funding / totalBenefeciaries : 0;
+            instance.fundingPerBeneficiary = instance.funding / instance.targetBeneficiary;
             instance.totalAreaCovered = Math.floor(Math.random() * 1000) + 0;
-            instance.supervisor = {
-                managerName: "John Smith",
-                email: "smith.john8293@gmail.com",
-                location: "Delhi",
-                mobile: "9281838271"
-            };
-            instance.ngo = {
-                ngoName: "Social Welfare",
-                managerName: "Anurag Kumar",
-                email: "anurag.kumar38@gmail.com",
-                location: "Delhi",
-                mobile: "7816219162"
-            };
             return await instance;
         } catch (e) {
             console.log(e);

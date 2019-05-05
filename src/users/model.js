@@ -182,6 +182,10 @@ let ProgramSchema = new mongoose.Schema({
         type: Number,
         min: [0, "Funding should not less than 0"]
     },
+    targetBeneficiary: {
+        type: Number,
+        min: [1, "Atleast one beneficiary required"]
+    },
     average: {
         type: Number,
         min: [0, "Percentage should not less than 0"],
@@ -200,6 +204,90 @@ let ProgramSchema = new mongoose.Schema({
         max: [100, "Percentage should not greater than 100"],
         default: 0
     },
+    supervisors: [{
+        employee_code: {
+            type: String,
+            required: true
+        },
+        role: {
+            type: String,
+            required: true
+        },
+        name: {
+            type: String,
+            required: true
+        },
+        email: {
+            type: String,
+            required: true,
+            validate: {
+                validator: email => emailRegex.test(email),
+                message: props => `${props.value} is not a valid email address`
+            }
+        },
+        mobile: {
+            type: String,
+            required: true,
+            validate: {
+                validator: mobile => mobileRegex.test(mobile),
+                message: props => `${props.value} is not a valid mobile`
+            }
+        },
+        country: {
+            type: String,
+            required: true,
+        },
+        city: {
+            type: String,
+            required: true,
+        },
+    }],
+    ngo: {
+        ngoName: {
+            type: String,
+            required: true
+        },
+        managerFirstName: {
+            type: String,
+            required: true
+        },
+        managerLastName: {
+            type: String,
+            required: true
+        },
+        email: {
+            type: String,
+            required: true,
+            validate: {
+                validator: email => emailRegex.test(email),
+                message: props => `${props.value} is not a valid email address`
+            }
+        },
+        mobile: {
+            type: String,
+            required: true,
+            validate: {
+                validator: mobile => mobileRegex.test(mobile),
+                message: props => `${props.value} is not a valid mobile`
+            }
+        },
+        country: {
+            type: String,
+            required: true,
+        },
+        location: {
+            type: String,
+            required: true,
+        },
+    },
+    rules: [{
+        componentName: {
+            type: String
+        },
+        rules: [{
+            type: String
+        }]
+    }],
     questions: [{
         _id: {
             type: String,

@@ -23,13 +23,13 @@ let programQuestionController = new ProgramQuestionController();
 let questionController = new QuestionController();
 
 let upload = multer({dest: 'media/'});
-let cpUpload = upload.fields([{ name: 'image', maxCount: 1 }]);
+let uploadImage = upload.fields([{ name: 'image', maxCount: 1 }]);
 
 /* GET users listing. */
 router.post('/load-questions', (req, res, next) => {
     loadQuestions(req, res, next);
 });
-router.post('/upload-image', cpUpload, (req, res, next) => {
+router.post('/upload-image', uploadImage, (req, res, next) => {
     imageController.uploadImage(req, res, next);
 });
 
