@@ -1,5 +1,4 @@
 import express from 'express';
-import multer from 'multer';
 import {
     BeneficiaryController,
     FormController,
@@ -22,14 +21,11 @@ let beneficiaryController = new BeneficiaryController();
 let programQuestionController = new ProgramQuestionController();
 let questionController = new QuestionController();
 
-let upload = multer({dest: 'media/'});
-let uploadImage = upload.fields([{ name: 'image', maxCount: 1 }]);
-
 /* GET users listing. */
 router.post('/load-questions', (req, res, next) => {
     loadQuestions(req, res, next);
 });
-router.post('/upload-image', uploadImage, (req, res, next) => {
+router.post('/upload-image', imageController.uploadImageSetting(), (req, res, next) => {
     imageController.uploadImage(req, res, next);
 });
 

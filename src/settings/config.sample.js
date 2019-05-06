@@ -15,3 +15,8 @@ module.exports.dsn = Object.freeze("https://04c09d7c2a4941d4973b6706b417cc65@sen
 
 module.exports.port = Object.freeze(3000);
 
+module.exports.mediaPath = Object.freeze("media/");
+
+module.exports.apiBaseUrl = Object.freeze("http://127.0.0.1:3000/");
+
+module.exports.jwtSecretExpirationInSeconds = Object.freeze(60*60*24*365);

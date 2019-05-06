@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import {jwtSecret} from "../settings/config";
+import multer from 'multer';
+import {jwtSecret, mediaPath, apiBaseUrl, jwtSecretExpirationInSeconds} from "../settings/config";
 import {
     BeneficiaryRepository,
     FormQuestionRepository,
@@ -29,7 +30,8 @@ export class UserController extends BaseController{
                 if (compareHash(data.password, user.password) == false) {
                     sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
                 } else {
-                    let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: 60*60*24*365});
+                    let token = await jwt.sign({"email": user.email}, jwtSecret,
+                        {expiresIn: jwtSecretExpirationInSeconds});
                     sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token});
                 }
             }
@@ -48,7 +50,7 @@ export class UserController extends BaseController{
             if (compareHash(data.password, user.password) == false) {
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
             } else {
-                let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: 60*60*24*365});
+                let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: jwtSecretExpirationInSeconds});
                 sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token,  resetPassword: user.allowLoggedIn});
             }
         }
@@ -315,8 +317,24 @@ export class ProgramQuestionController {
 
 
 export class ImageController {
+    uploadImageSetting() {
+        let storage = multer.diskStorage({
+            destination: (req, file, callback)=> {
+                callback(null, mediaPath);
+            },
+            filename: (req, file, cb) => {
+                cb(null, file.fieldname + '-' + Date.now() + '.' + file.originalname.split('.').pop())
+            }
+        });
+        let upload = multer({storage: storage});
+        return upload.fields([{ name: 'image', maxCount: 1 }]);
+    }
+
     uploadImage(req, res, next) {
-        console.log(req.files);
-        sendResponse(res, responseCodes.HTTP_200_OK, null, {});
+        console.log(req.files.image[0].path);
+        let data = {
+            url: apiBaseUrl + req.files.image[0].path
+        };
+        sendResponse(res, responseCodes.HTTP_200_OK, null, data);
     }
 }
