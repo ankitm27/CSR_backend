@@ -8,8 +8,16 @@ import {
     ProgramRepository, QuestionRepository,
     UserRepository
 } from "./repository";
-import {compareHash, makeHash, getValidationObjects, validateAnswer, getValidators, isEmpty} from "../utils/helpers";
-import {Answer, Program, Question, User, Validation} from "./model";
+import {
+    compareHash,
+    makeHash,
+    getValidationObjects,
+    validateAnswer,
+    getValidators,
+    isEmpty,
+    randomIntFromRange
+} from "../utils/helpers";
+import {Answer, Beneficiary, Program, Question, User, Validation} from "./model";
 import {BaseController} from "../contrib/controller";
 import responseCodes, {sendResponse} from "../contrib/response.py";
 import {ROLE_CHOICES} from "./model";
@@ -178,8 +186,8 @@ export class ProgramController extends BaseController {
     performCreate(req) {
         let data = req.body;
         data.user = req.user._id;
-        data.average = Math.floor(Math.random() * 100) + 0;
-        data.good = Math.floor(Math.random() * (100 - data.average)) + 0;
+        data.average = randomIntFromRange(0, 100);
+        data.good = randomIntFromRange(0, 100 - data.average);
         data.bad = 100 - data.average - data.good;
         return data;
     }
@@ -213,24 +221,22 @@ export class ProgramController extends BaseController {
         try {
             instance = instance.toObject();
             instance.fundingPerBeneficiary = instance.funding / instance.targetBeneficiary;
-            instance.totalAreaCovered = Math.floor(Math.random() * 1000) + 0;
-            instance.beneficiaries = [{
-                name: "Shubham",
-                date: new Date(),
-                totalDetail: 20,
-                unverifiedDetail: 19,
-                totalRules: 30,
-                unfollowedRules: 29,
-                risk: 'high',
-            },{
-                name: "Ankit",
-                date: new Date(),
-                totalDetail: 90,
-                unverifiedDetail: 59,
-                totalRules: 70,
-                unfollowedRules: 49,
-                risk: 'low',
-            }];
+            instance.totalAreaCovered = randomIntFromRange(0, 1000);
+            let beneficiaries = await Beneficiary.find({users: {$in: instance.user}});
+            let beneficiariesData = [];
+            let RISK_CHOICES = ['high', 'medium', 'low'];
+            for (let beneficiary of beneficiaries) {
+                beneficiary = beneficiary.toObject();
+                beneficiary.date = beneficiary.createdAt;
+                beneficiary.totalDetail = await Answer.find({beneficiary: beneficiary._id}).countDocuments();
+                beneficiary.unverifiedDetail = randomIntFromRange(0, beneficiary.totalDetail);
+                beneficiary.totalRules = randomIntFromRange(0, 1000);
+                beneficiary.unfollowedRules = randomIntFromRange(0, beneficiary.totalRules);
+                beneficiary.risk = RISK_CHOICES[randomIntFromRange(0, RISK_CHOICES.length -1)]
+                beneficiary.rules = instance.rules;
+                beneficiariesData.push(beneficiary);
+            }
+            instance.beneficiaries = await beneficiariesData;
             return await instance;
         } catch (e) {
             console.log(e);
@@ -281,7 +287,8 @@ export class BeneficiaryController extends BaseController {
 
     performCreate(req) {
         let data = req.body;
-        data.user = [req.user._id];
+        data.users = [req.user._id];
+        console.log(data);
         return data;
     }
 }

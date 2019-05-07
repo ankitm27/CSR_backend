@@ -66,8 +66,7 @@ export class BaseRepository {
         }
     }
 
-    async getList(req) {
-        let query = {};
+    async getList(req, query={}) {
         let sortQuery = this.getSortedQuery(req);
         return await this.getPaginatedResponse(req, sortQuery, query);
     }

@@ -1,6 +1,6 @@
 import {BaseRepository} from "../contrib/repository";
 import {Beneficiary, Form, FormQuestion, Program, User, Question, Validation, Answer} from "./model";
-import {getValidations} from "../utils/helpers";
+import {getValidations, randomIntFromRange} from "../utils/helpers";
 import mongoose from "mongoose";
 
 
@@ -72,7 +72,7 @@ export class BeneficiaryRepository extends BaseRepository {
     }
 
     async generateUniqueNumber() {
-        let aadhaarNumber = Math.floor(Math.random() * 9999999999) + 100000000000;
+        let aadhaarNumber = randomIntFromRange(100000000000, 9999999999);
         if (await Beneficiary.find({aadhaarNumber: aadhaarNumber}).countDocuments() > 0) {
             return this.generateUniqueNumber();
         }else {

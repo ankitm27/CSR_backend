@@ -260,13 +260,10 @@ export async function validateAnswer(question, data) {
     }
 }
 
-// export default storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         cb(null, '/media')
-//     },
-//     filename: function (req, file, cb) {
-//         cb(null, file.fieldname + '-' + Date.now())
-//     }
-// })
-//
-//
+export function randomIntFromRange(lower, upper) {
+    if (Number.isInteger(lower) && Number.isInteger(upper)) {
+        return Math.floor(Math.random() * upper) + lower;
+    }else {
+        return null;
+    }
+}
