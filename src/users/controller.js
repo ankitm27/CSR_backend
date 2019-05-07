@@ -214,6 +214,23 @@ export class ProgramController extends BaseController {
             instance = instance.toObject();
             instance.fundingPerBeneficiary = instance.funding / instance.targetBeneficiary;
             instance.totalAreaCovered = Math.floor(Math.random() * 1000) + 0;
+            instance.beneficiaries = [{
+                name: "Shubham",
+                date: new Date(),
+                totalDetail: 20,
+                unverifiedDetail: 19,
+                totalRules: 30,
+                unfollowedRules: 29,
+                risk: 'high',
+            },{
+                name: "Ankit",
+                date: new Date(),
+                totalDetail: 90,
+                unverifiedDetail: 59,
+                totalRules: 70,
+                unfollowedRules: 49,
+                risk: 'low',
+            }];
             return await instance;
         } catch (e) {
             console.log(e);

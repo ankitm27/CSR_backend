@@ -39,9 +39,7 @@ router.post('/volunteer/login', (req, res, next) => {
     userController.volunteerLogin(req, res, next);
 });
 
-router.use((req, res, next) => {
-    tokenMiddleWare.checkToken(req, res, next);
-});
+router.use(tokenMiddleWare.checkToken);
 
 router.get('/dashboard', (req, res, next) => {
     userController.getDashoardDetails(req, res, next);
