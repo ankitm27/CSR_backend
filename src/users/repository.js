@@ -18,7 +18,6 @@ export class UserRepository extends BaseRepository {
         return await "Hello";
         // return await User.find();
         // data.password = makeHash(data.password);
-        // console.log(data);
         // User.create(data, (err, instance) => {
         //     if (err){
         //         return err;

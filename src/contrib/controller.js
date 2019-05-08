@@ -34,17 +34,25 @@ export class BaseController {
     }
 
     async getList(req, res, next) {
-        let query = await this.getListQuery(req);
-        let response = await this.repository.getList(req);
-        sendResponse(res, responseCodes.HTTP_200_OK, null, response);
+        try {
+            let query = await this.getListQuery(req);
+            let response = await this.repository.getList(req);
+            sendResponse(res, responseCodes.HTTP_200_OK, null, response);
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+        }
     }
 
     async getDetail(req, res, next) {
-        let uid = req.params.uid;
-        let query = await this.getDetailQuery(req);
-        let response = await this.repository.get_object_or_404(res, uid);
-        if (response) {
-            sendResponse(res, responseCodes.HTTP_200_OK, null, await this.getDetailResponse(response));
+        try {
+            let uid = req.params.uid;
+            let query = await this.getDetailQuery(req);
+            let response = await this.repository.get_object_or_404(res, uid);
+            if (response) {
+                sendResponse(res, responseCodes.HTTP_200_OK, null, await this.getDetailResponse(response));
+            }
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
@@ -54,27 +62,35 @@ export class BaseController {
             let response = await this.repository.create(data);
             sendResponse(res, responseCodes.HTTP_201_CREATED, null, response)
         }catch (e) {
-            console.log(e);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
     async update(req, res, next) {
-        let uid = req.params.uid;
-        let query = await this.getUpdateQuery(req);
-        let data = await this.performUpdate(req);
-        let instance = await this.repository.get_object_or_404(res, uid);
-        if (instance) {
-            let response = await this.repository.update(instance, data);
-            sendResponse(res, responseCodes.HTTP_200_OK, null, response);
+        try {
+            let uid = req.params.uid;
+            let query = await this.getUpdateQuery(req);
+            let data = await this.performUpdate(req);
+            let instance = await this.repository.get_object_or_404(res, uid);
+            if (instance) {
+                let response = await this.repository.update(instance, data);
+                sendResponse(res, responseCodes.HTTP_200_OK, null, response);
+            }
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
     async delete(req, res, next) {
-        let uid = req.params.uid;
-        let query = await this.getDeleteQuery(req);
-        let response = await this.repository.delete_object_or_404(res, uid);
-        if (response) {
-            sendResponse(res, responseCodes.HTTP_204_NO_CONTENT)
+        try {
+            let uid = req.params.uid;
+            let query = await this.getDeleteQuery(req);
+            let response = await this.repository.delete_object_or_404(res, uid);
+            if (response) {
+                sendResponse(res, responseCodes.HTTP_204_NO_CONTENT)
+            }
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 }

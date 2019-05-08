@@ -40,12 +40,16 @@ export class UserController extends BaseController{
                 } else {
                     let token = await jwt.sign({"email": user.email}, jwtSecret,
                         {expiresIn: jwtSecretExpirationInSeconds});
-                    sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token});
+                    let data = {
+                        token: token,
+                        user_id: user._id,
+                        userName: user.firstName + " " + user.lastName,
+                    };
+                    sendResponse(res, responseCodes.HTTP_200_OK, null, data);
                 }
             }
         }catch (e) {
-            console.log(e);
-            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
@@ -59,7 +63,13 @@ export class UserController extends BaseController{
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid password");
             } else {
                 let token = await jwt.sign({"email": user.email}, jwtSecret, {expiresIn: jwtSecretExpirationInSeconds});
-                sendResponse(res, responseCodes.HTTP_200_OK, null, {token: token,  resetPassword: user.allowLoggedIn});
+                let data = {
+                    token: token,
+                    user_id: user._id,
+                    userName: user.firstName + " " + user.lastName,
+                    resetPassword: user.allowLoggedIn
+                };
+                sendResponse(res, responseCodes.HTTP_200_OK, null, data);
             }
         }
     }
@@ -79,30 +89,42 @@ export class UserController extends BaseController{
                     sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "User already exists with this mobile");
                 } else {
                     data.role = role;
-                    data.allowLoggedIn = role == ROLE_CHOICES.ADMIN
-                    let user = await User.create(data);
+                    data.allowLoggedIn = role == ROLE_CHOICES.ADMIN;
+                    try {
+                        await User.create(data);
+                    }catch (e) {
+                        sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+                    }
                     sendResponse(res, responseCodes.HTTP_200_OK, null, {});
                 }
             }else{
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid role provided");
             }
         }catch (e) {
-            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
     async resetPassword(req, res, next) {
-        let data = req.body;
-        let user = req.user;
-        if (compareHash(data.currentPassword, user.password) == false) {
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid current password");
-        }else if (data.newPassword != data.confirmPassword) {
-            sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Both password did not match");
-        } else {
-            user.password = makeHash(data.newPassword);
-            user.allowLoggedIn = true;
-            user.save();
-            sendResponse(res, responseCodes.HTTP_200_OK, null, {updated: true});
+        try {
+            let data = req.body;
+            let user = req.user;
+            if (compareHash(data.currentPassword, user.password) == false) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Invalid current password");
+            }else if (data.newPassword != data.confirmPassword) {
+                sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Both password did not match");
+            } else {
+                user.password = makeHash(data.newPassword);
+                user.allowLoggedIn = true;
+                try {
+                    user.save();
+                }catch(e) {
+                    sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+                }
+                sendResponse(res, responseCodes.HTTP_200_OK, null, {updated: true});
+            }
+        }catch(e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
@@ -110,7 +132,7 @@ export class UserController extends BaseController{
         try {
             sendResponse(res, responseCodes.HTTP_200_OK, null, req.user);
         }catch (e) {
-            console.log(e);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
@@ -121,7 +143,11 @@ export class UserController extends BaseController{
             delete data["email"];
             delete data["password"];
             delete data["role"];
-            let user = this.repository.update(req.user, data);
+            try {
+                req.user = this.repository.update(req.user, data);
+            }catch(e){
+                sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+            }
             sendResponse(res, responseCodes.HTTP_200_OK, null, req.user);
         }catch (e) {
             console.log(e);
@@ -184,26 +210,34 @@ export class ProgramController extends BaseController {
     }
 
     performCreate(req) {
-        let data = req.body;
-        data.user = req.user._id;
-        data.average = randomIntFromRange(0, 100);
-        data.good = randomIntFromRange(0, 100 - data.average);
-        data.bad = 100 - data.average - data.good;
-        return data;
+        try {
+            let data = req.body;
+            data.user = req.user._id;
+            data.average = randomIntFromRange(0, 100);
+            data.good = randomIntFromRange(0, 100 - data.average);
+            data.bad = 100 - data.average - data.good;
+            return data;
+        }catch (e) {
+            console.log(e);
+        }
     }
 
     async getQuestions(req, res, next) {
-        let program = await this.repository.get_object_or_404(res, req.params.uid);
-        let programQuestions = await program.questions.toObject();
-        let questionRespository = new QuestionRepository();
-        let response = await programQuestions.map(async (programQuestion) => {
-            let question = await questionRespository.get_object_or_404(res, programQuestion.question);
-            programQuestion.validators = await getValidators(question, programQuestion.validations);
-            programQuestion.questionType = await question.questionType;
-            programQuestion.isActive = await question.isActive;
-            return await programQuestion;
-        });
-        sendResponse(res, responseCodes.HTTP_200_OK, null, await Promise.all(response));
+        try {
+            let program = await this.repository.get_object_or_404(res, req.params.uid);
+            let programQuestions = await program.questions.toObject();
+            let questionRespository = new QuestionRepository();
+            let response = await programQuestions.map(async (programQuestion) => {
+                let question = await questionRespository.get_object_or_404(res, programQuestion.question);
+                programQuestion.validators = await getValidators(question, programQuestion.validations);
+                programQuestion.questionType = await question.questionType;
+                programQuestion.isActive = await question.isActive;
+                return await programQuestion;
+            });
+            sendResponse(res, responseCodes.HTTP_200_OK, null, await Promise.all(response));
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+        }
     }
 
     async getBenefeciaries(req, res, next) {
@@ -213,7 +247,7 @@ export class ProgramController extends BaseController {
             };
             sendResponse(res, responseCodes.HTTP_200_OK, null, data);
         } catch (e) {
-            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e, null);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
@@ -225,21 +259,25 @@ export class ProgramController extends BaseController {
             let beneficiaries = await Beneficiary.find({users: {$in: instance.user}});
             let beneficiariesData = [];
             let RISK_CHOICES = ['high', 'medium', 'low'];
-            for (let beneficiary of beneficiaries) {
-                beneficiary = beneficiary.toObject();
-                beneficiary.date = beneficiary.createdAt;
-                beneficiary.totalDetail = await Answer.find({beneficiary: beneficiary._id}).countDocuments();
-                beneficiary.unverifiedDetail = randomIntFromRange(0, beneficiary.totalDetail);
-                beneficiary.totalRules = randomIntFromRange(0, 1000);
-                beneficiary.unfollowedRules = randomIntFromRange(0, beneficiary.totalRules);
-                beneficiary.risk = RISK_CHOICES[randomIntFromRange(0, RISK_CHOICES.length -1)]
-                beneficiary.rules = instance.rules;
-                beneficiariesData.push(beneficiary);
+            try {
+                for (let beneficiary of beneficiaries) {
+                    beneficiary = beneficiary.toObject();
+                    beneficiary.date = beneficiary.createdAt;
+                    beneficiary.totalDetail = await Answer.find({beneficiary: beneficiary._id}).countDocuments();
+                    beneficiary.unverifiedDetail = randomIntFromRange(0, beneficiary.totalDetail);
+                    beneficiary.totalRules = randomIntFromRange(0, 1000);
+                    beneficiary.unfollowedRules = randomIntFromRange(0, beneficiary.totalRules);
+                    beneficiary.risk = RISK_CHOICES[randomIntFromRange(0, RISK_CHOICES.length -1)]
+                    beneficiary.rules = instance.rules;
+                    beneficiariesData.push(beneficiary);
+                }
+            }catch(e){
+                sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
             }
             instance.beneficiaries = await beneficiariesData;
             return await instance;
         } catch (e) {
-            console.log(e);
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
         }
     }
 
@@ -273,9 +311,13 @@ export class FormController extends BaseController {
     }
 
     performCreate(req) {
-        let data = req.body;
-        data.user = req.user._id;
-        return data;
+        try {
+            let data = req.body;
+            data.user = req.user._id;
+            return data;
+        }catch (e) {
+            console.log(e);
+        }
     }
 }
 
@@ -286,10 +328,13 @@ export class BeneficiaryController extends BaseController {
     }
 
     performCreate(req) {
-        let data = req.body;
-        data.users = [req.user._id];
-        console.log(data);
-        return data;
+        try {
+            let data = req.body;
+            data.users = [req.user._id];
+            return data;
+        }catch (e) {
+            console.log(e);
+        }
     }
 }
 
@@ -299,8 +344,12 @@ export class QuestionController extends BaseController {
     }
 
     async getQuestion(req, res, next) {
-        let questions = await Question.find({});
-        sendResponse(res, responseCodes.HTTP_200_OK, null, questions);
+        try {
+            let questions = await Question.find({});
+            sendResponse(res, responseCodes.HTTP_200_OK, null, questions);
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+        }
     }
 }
 
@@ -342,23 +391,30 @@ export class ProgramQuestionController {
 
 export class ImageController {
     uploadImageSetting() {
-        let storage = multer.diskStorage({
-            destination: (req, file, callback)=> {
-                callback(null, mediaPath);
-            },
-            filename: (req, file, cb) => {
-                cb(null, file.fieldname + '-' + Date.now() + '.' + file.originalname.split('.').pop())
-            }
-        });
-        let upload = multer({storage: storage});
-        return upload.fields([{ name: 'image', maxCount: 1 }]);
+        try {
+            let storage = multer.diskStorage({
+                destination: (req, file, callback)=> {
+                    callback(null, mediaPath);
+                },
+                filename: (req, file, cb) => {
+                    cb(null, file.fieldname + '-' + Date.now() + '.' + file.originalname.split('.').pop())
+                }
+            });
+            let upload = multer({storage: storage});
+            return upload.fields([{ name: 'image', maxCount: 1 }]);
+        }catch (e) {
+            console.log(e);
+        }
     }
 
     uploadImage(req, res, next) {
-        console.log(req.files.image[0].path);
-        let data = {
-            url: apiBaseUrl + req.files.image[0].path
-        };
-        sendResponse(res, responseCodes.HTTP_200_OK, null, data);
+        try {
+            let data = {
+                url: apiBaseUrl + req.files.image[0].path
+            };
+            sendResponse(res, responseCodes.HTTP_200_OK, null, data);
+        }catch (e) {
+            sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
+        }
     }
 }
