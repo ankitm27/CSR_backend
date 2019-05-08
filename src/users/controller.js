@@ -259,6 +259,7 @@ export class ProgramController extends BaseController {
             let beneficiaries = await Beneficiary.find({users: {$in: instance.user}});
             let beneficiariesData = [];
             let RISK_CHOICES = ['high', 'medium', 'low'];
+            let STATUS_CHOICES = ['verified', 'unverified', 'duplicate', 'fraud'];
             try {
                 for (let beneficiary of beneficiaries) {
                     beneficiary = beneficiary.toObject();
@@ -269,6 +270,22 @@ export class ProgramController extends BaseController {
                     beneficiary.unfollowedRules = randomIntFromRange(0, beneficiary.totalRules);
                     beneficiary.risk = RISK_CHOICES[randomIntFromRange(0, RISK_CHOICES.length -1)]
                     beneficiary.rules = instance.rules;
+                    beneficiary.aadhaarNumber = {
+                        data: beneficiary.aadhaarNumber,
+                        status: STATUS_CHOICES[randomIntFromRange(0, STATUS_CHOICES.length -1)]
+                    };
+                    beneficiary.name = {
+                        data: beneficiary.name,
+                        status: STATUS_CHOICES[randomIntFromRange(0, STATUS_CHOICES.length -1)]
+                    };
+                    beneficiary.age = {
+                        data: beneficiary.age,
+                        status: STATUS_CHOICES[randomIntFromRange(0, STATUS_CHOICES.length -1)]
+                    };
+                    beneficiary.gender = {
+                        data: beneficiary.gender,
+                        status: STATUS_CHOICES[randomIntFromRange(0, STATUS_CHOICES.length -1)]
+                    };
                     beneficiariesData.push(beneficiary);
                 }
             }catch(e){
