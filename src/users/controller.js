@@ -256,6 +256,13 @@ export class ProgramController extends BaseController {
             instance = instance.toObject();
             instance.fundingPerBeneficiary = instance.funding / instance.targetBeneficiary;
             instance.totalAreaCovered = randomIntFromRange(0, 1000);
+            instance.usersGood = randomIntFromRange(0, 100);
+            instance.usersRevised = randomIntFromRange(0, 100);
+            instance.usersFraud = randomIntFromRange(0, 100);
+            instance.rulesGood = randomIntFromRange(0, 100);
+            instance.rulesRevised = randomIntFromRange(0, 100);
+            instance.rulesFraud = randomIntFromRange(0, 100);
+
             let beneficiaries = await Beneficiary.find({users: {$in: instance.user}});
             let beneficiariesData = [];
             let RISK_CHOICES = ['high', 'medium', 'low'];
@@ -288,7 +295,7 @@ export class ProgramController extends BaseController {
                     };
                     beneficiariesData.push(beneficiary);
                 }
-            }catch(e){
+            }catch (e) {
                 sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);
             }
             instance.beneficiaries = await beneficiariesData;
