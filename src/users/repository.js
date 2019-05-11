@@ -52,8 +52,10 @@ export class ProgramRepository extends BaseRepository {
                     validations: await Object.values(validationsData.insertedIds),
                 });
             }
-            console.log(programQuestionData);
-            let programs = await Program.updateOne({_id: program._id}, {$set: {questions: programQuestionData}});
+            let programs = await Program.updateOne(
+                {_id: program._id},
+                {$push: {questions: {$each: programQuestionData}}},
+            );
             return await programs;
         }catch (e) {
             console.log(e);

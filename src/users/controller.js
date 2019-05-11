@@ -388,6 +388,10 @@ export class QuestionController extends BaseController {
         super(QuestionRepository);
     }
 
+    getListQuery(req) {
+        return {isActive: true};
+    }
+
     async getQuestion(req, res, next) {
         try {
             let questions = await Question.find({});

@@ -36,7 +36,7 @@ export class BaseController {
     async getList(req, res, next) {
         try {
             let query = await this.getListQuery(req);
-            let response = await this.repository.getList(req);
+            let response = await this.repository.getList(req, query);
             sendResponse(res, responseCodes.HTTP_200_OK, null, response);
         }catch (e) {
             sendResponse(res, responseCodes.HTTP_500_INTERAL_SERVER_ERROR, e);

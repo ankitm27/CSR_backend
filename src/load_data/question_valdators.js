@@ -40,7 +40,7 @@ let questions = [
     },{
         name: "Date",
         questionType: QUESTION_TYPE_CHOICES.DATE,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.DATE_FORMAT,
             VALIDATION_NAME_CHOICES.MIN,
@@ -49,7 +49,7 @@ let questions = [
     },{
         name: "Time",
         questionType: QUESTION_TYPE_CHOICES.TIME,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.TIME_FORMAT,
             VALIDATION_NAME_CHOICES.MIN,
@@ -58,7 +58,7 @@ let questions = [
     },{
         name: "Signature",
         questionType: QUESTION_TYPE_CHOICES.FILE,
-        isActive: true,
+        isActive: false,
         extensions: [
             EXTENSION_CHOICES.GIF,
             EXTENSION_CHOICES.JPEG,
@@ -69,19 +69,19 @@ let questions = [
     },{
         name: "Section Break",
         questionType: QUESTION_TYPE_CHOICES.BREAK,
-        isActive: true,
+        isActive: false,
         validatorNames: []
     },{
         name: "Area On Map",
         questionType: QUESTION_TYPE_CHOICES.NUMBER,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.AREA_UNIT,
         ]
     },{
         name: "Length On Map",
         questionType: QUESTION_TYPE_CHOICES.NUMBER,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.LENGTH_UNIT,
         ]
@@ -96,7 +96,7 @@ let questions = [
     },{
         name: "Image Geo Tag",
         questionType: QUESTION_TYPE_CHOICES.FILE,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.IMAGE_RESOLUTION,
             VALIDATION_NAME_CHOICES.LOCATION_ACCURACY,
@@ -104,19 +104,19 @@ let questions = [
     },{
         name: "Phone",
         questionType: QUESTION_TYPE_CHOICES.PHONE,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.COUNTRY_CODE,
         ]
     },{
         name: "Email",
         questionType: QUESTION_TYPE_CHOICES.EMAIL,
-        isActive: true,
+        isActive: false,
         validatorNames: []
     },{
         name: "Audio",
         questionType: QUESTION_TYPE_CHOICES.FILE,
-        isActive: true,
+        isActive: false,
         extensions: [
             EXTENSION_CHOICES.MP3,
             EXTENSION_CHOICES.WAV,
@@ -125,7 +125,7 @@ let questions = [
     },{
         name: "Video",
         questionType: QUESTION_TYPE_CHOICES.FILE,
-        isActive: true,
+        isActive: false,
         extensions: [
             EXTENSION_CHOICES.MP4,
             EXTENSION_CHOICES.AVI,
@@ -137,13 +137,13 @@ let questions = [
     },{
         name: "File Upload",
         questionType: QUESTION_TYPE_CHOICES.FILE,
-        isActive: true,
+        isActive: false,
         extensions: [],
         validatorNames: []
     },{
         name: "Scale",
         questionType: QUESTION_TYPE_CHOICES.SCALE,
-        isActive: true,
+        isActive: false,
         validatorNames: [
             VALIDATION_NAME_CHOICES.MIN,
             VALIDATION_NAME_CHOICES.MAX,
@@ -152,12 +152,12 @@ let questions = [
     },{
         name: "Rating",
         questionType: QUESTION_TYPE_CHOICES.RATING,
-        isActive: true,
+        isActive: false,
         validatorNames: []
     },{
         name: "Barcode",
         questionType: QUESTION_TYPE_CHOICES.BARCODE,
-        isActive: true,
+        isActive: false,
         validatorNames: []
     },
 ];
