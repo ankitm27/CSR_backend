@@ -232,6 +232,15 @@ export class ProgramController extends BaseController {
                 programQuestion.validators = await getValidators(question, programQuestion.validations);
                 programQuestion.questionType = await question.questionType;
                 programQuestion.isActive = await question.isActive;
+                let rules = await Program.findOne(
+                    {_id: program._id, "rules.componentName": question.questionType},
+                    {"rules.rules": 1},
+                );
+                if (rules == null){
+                    programQuestion.rules = [];
+                }else {
+                    programQuestion.rules = rules.rules[0].rules;
+                }
                 return await programQuestion;
             });
             sendResponse(res, responseCodes.HTTP_200_OK, null, await Promise.all(response));
