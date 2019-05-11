@@ -38,20 +38,23 @@ export class ProgramRepository extends BaseRepository {
         return await Answer.find({program: program_id}).distinct('beneficiary').countDocuments();
     }
 
-    async createProgramQuestion(data, validations) {
+    async createProgramQuestion(data, program) {
         try {
-            let validationIds = [];
-            let validationsData = await Validation.collection.insertMany(validations);
-            let programQuestion = await {
-                question: data.question,
-                title: data.title,
-                mandatory: true,
-                description: data.description != undefined ? data.description : null,
-                keyword: data.keyword != undefined ? data.keyword : null,
-                validations: await Object.values(validationsData.insertedIds),
-            };
-            let program = await Program.updateOne({_id: data.program}, {$push: {questions: programQuestion}});
-            return await program;
+            let programQuestionData = [];
+            for (let datum of data) {
+                let validationsData = await Validation.collection.insertMany(datum.validations);
+                programQuestionData.push(await {
+                    question: datum.question,
+                    title: datum.title,
+                    mandatory: true,
+                    description: datum.description != undefined ? datum.description : null,
+                    keyword: datum.keyword != undefined ? datum.keyword : null,
+                    validations: await Object.values(validationsData.insertedIds),
+                });
+            }
+            console.log(programQuestionData);
+            let programs = await Program.updateOne({_id: program._id}, {$set: {questions: programQuestionData}});
+            return await programs;
         }catch (e) {
             console.log(e);
         }

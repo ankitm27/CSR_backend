@@ -73,7 +73,6 @@ export class BaseRepository {
 
     async create(data) {
         try {
-            console.log(data);
             return await this.Model.create(data);
         }catch (e) {
             console.log(e);

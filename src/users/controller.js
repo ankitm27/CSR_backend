@@ -15,7 +15,7 @@ import {
     validateAnswer,
     getValidators,
     isEmpty,
-    randomIntFromRange
+    randomIntFromRange, validateRules
 } from "../utils/helpers";
 import {Answer, Beneficiary, Program, Question, User, Validation} from "./model";
 import {BaseController} from "../contrib/controller";
@@ -318,15 +318,27 @@ export class ProgramController extends BaseController {
         try {
             let data = req.body;
             let program = await this.repository.get_object_or_404(res, req.params.uid);
-            data.program = program._id;
-            let questionRespository = new QuestionRepository();
-            let question = await questionRespository.get_object_or_404(res, data.question);
-            let [errors, validations] = await getValidationObjects(data.program, question, data);
-            if (errors.length != 0) {
+            let errors = [];
+            let questionsData = [];
+            for (let datum of data) {
+                let questionRespository = new QuestionRepository();
+                let question = await questionRespository.get_object_or_404(res, datum.question);
+                let [error, validations] = await getValidationObjects(program._id, question, datum);
+                if (error.length != 0) {
+                    errors.push({
+                        "title": datum.title,
+                        "error": error
+                    });
+                }else {
+                    datum.validations = validations;
+                    questionsData.push(datum);
+                }
+            }
+            if(errors.length != 0){
                 sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, errors);
-            }else {
-                let programQuestion = await this.repository.createProgramQuestion(data, validations);
-                if(programQuestion.n == 1) {
+            }else{
+                let programQuestions = await this.repository.createProgramQuestion(questionsData, program);
+                if(programQuestions.n == 1) {
                     sendResponse(res, responseCodes.HTTP_200_OK, null, {"created": true});
                 }else {
                     sendResponse(res, responseCodes.HTTP_400_BAD_REQUEST, "Error while creation");
@@ -395,11 +407,10 @@ export class ProgramQuestionController {
             let data = req.body;
             let questionRepository = new QuestionRepository();
             let errors = {};
-
             for(let datum of data) {
-                let [success, error] = [false, null];
                 let question = await questionRepository.get_object_or_404(res, datum.question);
-                [success, error] = await validateAnswer(question, datum);
+                await validateRules(datum);
+                let [success, error] = await validateAnswer(question, datum);
                 if (!success) {
                     errors[datum.programQuestion] = {
                         "question": datum.question,

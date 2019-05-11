@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import multer from "multer";
 import {dsn} from "../settings/config";
 import {
+    Answer,
     IS_VALIDATE_LIST,
     QUESTION_TYPE_CHOICES, Validation,
     VALIDATION_NAME_CHOICES,
@@ -254,7 +255,6 @@ export async function validateAnswer(question, data) {
         }else {
             return [false, error];
         }
-
     }catch (e) {
         console.log(e);
     }
@@ -266,4 +266,13 @@ export function randomIntFromRange(lower, upper) {
     }else {
         return null;
     }
+}
+
+export async function validateRules(data) {
+    let answers = await Answer.find({programQuestion: data.programQuestion, program: data.program}, {answer: 1});
+    let array = [];
+    for (let answer of answers) {
+        array.push(answer.answer)
+    }
+    return array;
 }
