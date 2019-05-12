@@ -410,20 +410,21 @@ export class ProgramQuestionController {
         try {
             let data = req.body;
             let questionRepository = new QuestionRepository();
-            let errors = {};
+            let errors = [];
             for(let datum of data) {
                 let question = await questionRepository.get_object_or_404(res, datum.question);
                 await validateRules(datum);
                 let [success, error] = await validateAnswer(question, datum);
                 if (!success) {
-                    errors[datum.programQuestion] = {
+                    errors.push({
+                        "_id": datum.programQuestion,
                         "question": datum.question,
                         "program": datum.program,
                         "error": error
-                    }
+                    })
                 }
             }
-            if (isEmpty(errors)) {
+            if (errors.length == 0) {
                 let formQuestionRepository = new FormQuestionRepository();
                 let answer = await formQuestionRepository.createAnswer(data, req.user);
                 sendResponse(res, responseCodes.HTTP_200_OK, null, answer);
