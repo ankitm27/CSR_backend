@@ -6,7 +6,8 @@ import helmet from "helmet";
 
 import setUp from "./bin/db";
 import userRouter from "./users/route";
-import {port as PORT} from "./settings/config";
+import {imageComparissionUrl, port as PORT} from "./settings/config";
+import axios from "axios/index";
 
 setUp();
 

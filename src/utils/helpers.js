@@ -269,28 +269,47 @@ export function randomIntFromRange(lower, upper) {
 }
 
 export async function validateRules(question, data) {
-    let rules = await Program.findOne(
-        {_id: data.program, "rules.componentName": question.questionType},
-        {"rules.rules": 1},
-    );
-    rules = rules != null ? rules.rules[0].rules : [];
+    try {
+        let rules = await Program.findOne(
+            {_id: data.program, "rules.componentName": question.questionType},
+            {"rules.rules": 1},
+        );
 
-    if (question.questionType == QUESTION_TYPE_CHOICES.FILE) {
-        if (rules.includes("non-duplicate")) {
-            let answers = await Answer.find(
-                {programQuestion: data.programQuestion, program: data.program},
-                {answer: 1}
-            );
-            let imageUrls = [];
-            for (let answer of answers) {
-                imageUrls.push(answer.answer)
-            }
-            if(imageUrls.length > 0){
-                let response = await axios.post(imageComparissionUrl, {
-                    "source_image": data.answer,
-                    "target_images": imageUrls
-                })
+        rules = rules != null ? rules.rules[0].rules : [];
+
+        if (question.questionType == QUESTION_TYPE_CHOICES.FILE) {
+            if (rules.includes("non-duplicate")) {
+                let answers = await Answer.find(
+                    {programQuestion: data.programQuestion, program: data.program},
+                    {answer: 1}
+                );
+                let imageUrls = [];
+                for (let answer of answers) {
+                    imageUrls.push(answer.answer)
+                }
+                let response = {};
+                try {
+                    response = await axios.post(imageComparissionUrl, {
+                        "source_image": data.answer,
+                        "target_images": await imageUrls
+                    });
+                    if (response.data.success) {
+                        if (response.data.duplicate) {
+                            return [false, "Image already present"];
+                        }else {
+                            return [true, true];
+                        }
+                    }else {
+                        return [false, response.data.error];
+                    }
+                }catch(e) {
+                    return [false, "Server is not working"]
+                }
             }
         }
+        return [true, true];
+    }catch (e) {
+        console.log(e);
     }
+
 }
