@@ -67,7 +67,7 @@ export class UserController extends BaseController{
                     token: token,
                     user_id: user._id,
                     userName: user.firstName + " " + user.lastName,
-                    resetPassword: user.allowLoggedIn
+                    resetPassword: !user.allowLoggedIn
                 };
                 sendResponse(res, responseCodes.HTTP_200_OK, null, data);
             }

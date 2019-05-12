@@ -297,17 +297,17 @@ export async function validateRules(question, data) {
                         if (response.data.duplicate) {
                             return [false, "Image already present"];
                         }else {
-                            return [true, true];
+                            return [true, null];
                         }
                     }else {
                         return [false, response.data.error];
                     }
                 }catch(e) {
-                    return [false, "Server is not working"]
+                    return [true, null];
                 }
             }
         }
-        return [true, true];
+        return [true, null];
     }catch (e) {
         console.log(e);
     }
