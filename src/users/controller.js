@@ -418,6 +418,7 @@ export class ProgramQuestionController {
                 if (!success) {
                     errors.push({
                         "_id": datum.programQuestion,
+                        "title": datum.title,
                         "question": datum.question,
                         "program": datum.program,
                         "error": error
