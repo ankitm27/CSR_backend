@@ -8,6 +8,22 @@ let ROLE_CHOICES = Object.freeze({
     VOLUNTEER: "volunteer",
 });
 
+let QUESTION_TYPE_CHOICES = Object.freeze({
+    CHOICE: "choice",
+    STRING: "string",
+    NUMBER: "number",
+    FILE: "file",
+    BREAK: "break",
+    PHONE: "phone",
+    EMAIL: "email",
+    DATE: "date",
+    TIME: "time",
+    LOCATION: "location",
+    SCALE: "scale",
+    RATING: "rating",
+    BARCODE: "barcode",
+});
+
 let BeneficiarySchema = new mongoose.Schema({
     aadhaarNumber: {
         type: String,
@@ -282,7 +298,8 @@ let ProgramSchema = new mongoose.Schema({
     },
     rules: [{
         componentName: {
-            type: String
+            type: String,
+            // enum: Object.values(QUESTION_TYPE_CHOICES),
         },
         rules: [{
             type: String
@@ -380,22 +397,6 @@ let FormSchema = new mongoose.Schema({
 FormSchema.plugin(mongoose_timestamp);
 
 let Form = mongoose.model('Form', FormSchema);
-
-let QUESTION_TYPE_CHOICES = Object.freeze({
-    CHOICE: "choice",
-    STRING: "string",
-    NUMBER: "number",
-    FILE: "file",
-    BREAK: "break",
-    PHONE: "phone",
-    EMAIL: "email",
-    DATE: "date",
-    TIME: "time",
-    LOCATION: "location",
-    SCALE: "scale",
-    RATING: "rating",
-    BARCODE: "barcode",
-});
 
 let VALIDATION_NAME_CHOICES = Object.freeze({
     MIN: "min",

@@ -20,3 +20,5 @@ module.exports.mediaPath = Object.freeze("media/");
 module.exports.apiBaseUrl = Object.freeze("http://127.0.0.1:3000/");
 
 module.exports.jwtSecretExpirationInSeconds = Object.freeze(60*60*24*365);
+
+module.exports.imageComparissionUrl = Object.freeze("http://13.232.210.179/");

@@ -1,10 +1,10 @@
 import * as Sentry from "@sentry/node";
 import bcrypt from "bcrypt";
-import multer from "multer";
-import {dsn} from "../settings/config";
+import axios from "axios";
+import {dsn, imageComparissionUrl} from "../settings/config";
 import {
     Answer,
-    IS_VALIDATE_LIST,
+    IS_VALIDATE_LIST, Program,
     QUESTION_TYPE_CHOICES, Validation,
     VALIDATION_NAME_CHOICES,
     VALIDATOR_INFO,
@@ -268,11 +268,29 @@ export function randomIntFromRange(lower, upper) {
     }
 }
 
-export async function validateRules(data) {
-    let answers = await Answer.find({programQuestion: data.programQuestion, program: data.program}, {answer: 1});
-    let array = [];
-    for (let answer of answers) {
-        array.push(answer.answer)
+export async function validateRules(question, data) {
+    let rules = await Program.findOne(
+        {_id: data.program, "rules.componentName": question.questionType},
+        {"rules.rules": 1},
+    );
+    rules = rules != null ? rules.rules[0].rules : [];
+
+    if (question.questionType == QUESTION_TYPE_CHOICES.FILE) {
+        if (rules.includes("non-duplicate")) {
+            let answers = await Answer.find(
+                {programQuestion: data.programQuestion, program: data.program},
+                {answer: 1}
+            );
+            let imageUrls = [];
+            for (let answer of answers) {
+                imageUrls.push(answer.answer)
+            }
+            if(imageUrls.length > 0){
+                let response = await axios.post(imageComparissionUrl, {
+                    "source_image": data.answer,
+                    "target_images": imageUrls
+                })
+            }
+        }
     }
-    return array;
 }

@@ -413,7 +413,7 @@ export class ProgramQuestionController {
             let errors = [];
             for(let datum of data) {
                 let question = await questionRepository.get_object_or_404(res, datum.question);
-                await validateRules(datum);
+                await validateRules(question, datum);
                 let [success, error] = await validateAnswer(question, datum);
                 if (!success) {
                     errors.push({
