@@ -108,7 +108,7 @@ export class FormQuestionRepository{
             let beneficiaryRespository = new BeneficiaryRepository();
             let beneficiary = await beneficiaryRespository.create({
                 aadhaarNumber: await beneficiaryRespository.generateUniqueNumber(),
-                users: [user._id]
+                volunteers: [user._id]
             });
             let response = await data.map(async(datum) => {
                 datum.beneficiary = beneficiary._id;

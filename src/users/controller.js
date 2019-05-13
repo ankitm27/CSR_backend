@@ -282,7 +282,13 @@ export class ProgramController extends BaseController {
             instance.rulesRevised = randomIntFromRange(0, 100);
             instance.rulesFraud = randomIntFromRange(0, 100);
 
-            let beneficiaries = await Beneficiary.find({users: {$in: instance.user}});
+            let volunteers = await User.find({role: ROLE_CHOICES.VOLUNTEER, mobile: {$in: instance.mobiles}}, {"_id": 1});
+            let volunteersId = [];
+            for (let volunteer of volunteers) {
+                volunteersId.push(volunteer._id)
+            }
+
+            let beneficiaries = await Beneficiary.find({volunteers: {$in: volunteersId}});
             let beneficiariesData = [];
             let RISK_CHOICES = ['high', 'medium', 'low'];
             let STATUS_CHOICES = ['verified', 'unverified', 'duplicate', 'fraud'];

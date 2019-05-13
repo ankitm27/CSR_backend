@@ -54,7 +54,7 @@ let BeneficiarySchema = new mongoose.Schema({
         enum: ['female', 'male', 'trans'],
         maxlength: [10, "More than 10 characters are not allowed"]
     },
-    users: [{
+    volunteers: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }]
