@@ -295,7 +295,7 @@ export async function validateRules(question, data) {
                     });
                     if (response.data.success) {
                         if (response.data.duplicate) {
-                            return [false, "Image already present"];
+                            return [false, "Image you are trying to upload matches with another user"];
                         }else {
                             return [true, null];
                         }
