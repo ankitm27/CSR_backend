@@ -215,11 +215,11 @@ export async function validateAnswer(question, data) {
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.MAX) {
                     if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
                         answers.length > validatorValue) {
-                        error = util.format("Select less than to %s choice", validatorValue - 1);
+                        error = util.format("Select less than to %s choice", validatorValue);
                     }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
-                        error = util.format("String length must less than %s characters", validatorValue - 1);
+                        error = util.format("String length must less than %s characters", validatorValue);
                     }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer > validatorValue) {
-                        error = util.format("Number must less than %s", validatorValue - 1);
+                        error = util.format("Number must less than %s", validatorValue);
                     }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 &&
                         answer > validatorValue) {
                         error = util.format("Date must less than or equal to %s", String(answer));
