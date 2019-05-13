@@ -222,6 +222,16 @@ export class ProgramController extends BaseController {
         }
     }
 
+    getListQuery(req) {
+        if (req.user.role == ROLE_CHOICES.VOLUNTEER) {
+            return {mobiles: {$in: req.user.mobile}};
+        }else if (req.user.role == ROLE_CHOICES.ADMIN) {
+            return {user: req.user._id};
+        }else {
+            return {};
+        }
+    }
+
     async getQuestions(req, res, next) {
         try {
             let program = await this.repository.get_object_or_404(res, req.params.uid);

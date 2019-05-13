@@ -334,6 +334,14 @@ let ProgramSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Validation'
         }]
+    }],
+    mobiles: [{
+        type: String,
+        required: true,
+        validate: {
+            validator: mobile => mobileRegex.test(mobile),
+            message: props => `${props.value} is not a valid mobile`
+        }
     }]
 });
 

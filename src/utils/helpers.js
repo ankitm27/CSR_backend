@@ -193,12 +193,12 @@ export async function validateAnswer(question, data) {
                 let validatorValue = validators[validatorKey];
                 if(validatorKey == VALIDATION_NAME_CHOICES.MIN) {
                     if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
-                        answers.length > validatorValue) {
-                        error =util.format("Select more than to %s choice", validatorValue - 1);
+                        answers.length < validatorValue) {
+                        error =util.format("Select more than to or equal to %s choice", validatorValue);
                     }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length < validatorValue) {
-                        error = util.format("String length must more than %s characters", validatorValue - 1);
+                        error = util.format("String length must more than or equal to %s characters", validatorValue);
                     }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer < validatorValue) {
-                        error = util.format("Number must greater than %s", validatorValue - 1);
+                        error = util.format("Number must greater than or equal to %s", validatorValue);
                     }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 &&
                         answer < validatorValue) {
                         error = util.format("Date must greater than or equal to %s", String(answer));
@@ -210,16 +210,16 @@ export async function validateAnswer(question, data) {
                         error = util.format("Time must greater than or equal to %s", String(answer));
                     }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
                         answer < validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
-                        error = util.format("Value must greater than %s", String(answer));
+                        error = util.format("Value must greater than or equal to %s", String(answer));
                     }
                 }else if(validatorKey == VALIDATION_NAME_CHOICES.MAX) {
                     if(questionType == QUESTION_TYPE_CHOICES.CHOICE && validators[VALIDATION_NAME_CHOICES.MULTIPLE] &&
                         answers.length > validatorValue) {
-                        error = util.format("Select less than to %s choice", validatorValue);
+                        error = util.format("Select less than or equal to %s choice", validatorValue);
                     }else if(questionType == QUESTION_TYPE_CHOICES.STRING && answer.length > validatorValue) {
-                        error = util.format("String length must less than %s characters", validatorValue);
+                        error = util.format("String length must less than or equal to %s characters", validatorValue);
                     }else if(questionType == QUESTION_TYPE_CHOICES.NUMBER && answer > validatorValue) {
-                        error = util.format("Number must less than %s", validatorValue);
+                        error = util.format("Number must less than or equal to %s", validatorValue);
                     }else if (questionType == QUESTION_TYPE_CHOICES.DATE && validatorValue != 1 &&
                         answer > validatorValue) {
                         error = util.format("Date must less than or equal to %s", String(answer));
@@ -231,7 +231,7 @@ export async function validateAnswer(question, data) {
                         error = util.format("Time must less than or equal to %s", String(answer));
                     }else if(questionType == QUESTION_TYPE_CHOICES.SCALE &&
                         answer > validatorValue*validators[VALIDATION_NAME_CHOICES.STEP_SIZE]) {
-                        error = util.format("Value must less than %s", String(answer));
+                        error = util.format("Value must less than or equal to %s", String(answer));
                     }
                 }else if (validatorKey == VALIDATION_NAME_CHOICES.MULTIPLE && !validatorValue && answer.length > 1) {
                     error = "Select single choice";
