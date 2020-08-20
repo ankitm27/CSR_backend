@@ -20,7 +20,7 @@
     "angularjs-toaster": "^3.0.0",
     "async-redis": "^1.1.5",
     "axios": "^0.18.0",
-    "bcrypt": "^3.0.6",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.18.3",
     "bootstrap": "^3.4.0",
     "cors": "^2.8.5",
